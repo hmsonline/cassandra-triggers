@@ -118,6 +118,11 @@ public class DistributedCommitLog extends CassandraStore {
                 .remove(ByteBufferUtil.bytes(logEntry.getUuid()), path, deleteTime, ConsistencyLevel.ALL);
     }
 
+    public void errorLogEntry(LogEntry logEntry) throws Throwable {
+        logEntry.setStatus(LogEntryStatus.ERROR);
+        DistributedCommitLog.getLog().writeLogEntry(logEntry);
+    }
+
     // Utility Methods
     private Mutation getMutation(String name, String value) {
         return getMutation(name, ByteBufferUtil.bytes(value));
