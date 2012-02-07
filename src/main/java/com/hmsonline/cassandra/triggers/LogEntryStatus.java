@@ -1,4 +1,4 @@
-package org.apache.virgil.triggers;
+package com.hmsonline.cassandra.triggers;
 
 public enum LogEntryStatus {
     PREPARING, COMMITTED, COMPLETE; // ; is optional

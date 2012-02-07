@@ -1,4 +1,4 @@
-package org.apache.virgil.triggers;
+package com.hmsonline.cassandra.triggers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

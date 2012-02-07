@@ -1,4 +1,4 @@
-package org.apache.virgil.triggers;
+package com.hmsonline.cassandra.triggers;
 
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ConfigurationStore extends CassandraStore {
-    public static final String KEYSPACE = "virgil";
+    public static final String KEYSPACE = "triggers";
     public static final String COLUMN_FAMILY = "Configuration";
     private static Logger logger = LoggerFactory.getLogger(ConfigurationStore.class);
     private static ConfigurationStore instance = null;
@@ -48,7 +48,7 @@ public class ConfigurationStore extends CassandraStore {
         long currentTime = System.currentTimeMillis();
         long timeSinceRefresh = currentTime - this.lastFetchTime;
         if (timeSinceRefresh > REFRESH_INTERVAL) {
-            logger.debug("Refreshing virgil run-time configuration.");
+            logger.debug("Refreshing trigger configuration.");
             SlicePredicate predicate = new SlicePredicate();
             SliceRange range = new SliceRange(ByteBufferUtil.bytes(""), ByteBufferUtil.bytes(""), false, 10);
             predicate.setSlice_range(range);

@@ -1,4 +1,4 @@
-package org.apache.virgil.triggers;
+package com.hmsonline.cassandra.triggers;
 
 import java.util.ArrayList;
 import java.util.List;

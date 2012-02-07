@@ -1,4 +1,4 @@
-package org.apache.virgil.triggers;
+package com.hmsonline.cassandra.triggers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 public class TriggerStore extends CassandraStore {
     private static Logger logger = LoggerFactory.getLogger(TriggerStore.class);
 
-    public static final String KEYSPACE = "virgil";
+    public static final String KEYSPACE = "triggers";
     public static final String COLUMN_FAMILY = "Triggers";
     public static final String ENABLED = "enabled";
     private static TriggerStore instance = null;

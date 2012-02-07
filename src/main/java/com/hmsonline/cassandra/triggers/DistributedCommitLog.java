@@ -1,4 +1,4 @@
-package org.apache.virgil.triggers;
+package com.hmsonline.cassandra.triggers;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 public class DistributedCommitLog extends CassandraStore {
     private static Logger logger = LoggerFactory.getLogger(DistributedCommitLog.class);
 
-    public static final String KEYSPACE = "virgil";
+    public static final String KEYSPACE = "triggers";
     public static final String COLUMN_FAMILY = "CommitLog";
     public static final int MAX_ROW_SIZE = 10;
     public static final int BATCH_SIZE = 50;
