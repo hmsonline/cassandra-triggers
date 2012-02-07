@@ -3,10 +3,39 @@
 	<modelVersion>4.0.0</modelVersion>
 	<packaging>jar</packaging>
 	<name> HMS : Cassandra : Triggers </name>
-	<url>http://maven.apache.org</url>
+	<description>Cassandra Triggers is a lightweight mechanism to implement trigger-like functionality for Cassandra.</description>
+	<url>https://github.com/hmsonline/cassandra-triggers</url>
 	<groupId>com.hmsonline</groupId>
 	<artifactId>hms-cassandra-triggers</artifactId>
 	<version>0.12.0-SNAPSHOT</version>
+
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
+
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<scm>
+		<connection>scm:git:git@github.com:hmsonline/cassandra-triggers.git</connection>
+		<developerConnection>scm:git:git@github.com:hmsonline/cassandra-triggers.git</developerConnection>
+		<url>git@github.com:hmsonline/cassandra-triggers.git</url>
+	</scm>
+
+	<developers>
+		<developer>
+			<id>boneill42</id>
+			<name>Brian O'Neill</name>
+			<email>bone@alumni.brown.edu</email>
+		</developer>
+	</developers>
 
 	<dependencies>
 		<dependency>
