@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.cassandra.db.IMutation;
 import org.apache.cassandra.db.RowMutation;
 import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.apache.cassandra.thrift.InvalidRequestException;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -19,15 +20,20 @@ public class CassandraServerTriggerAspect {
     @Around("execution(* org.apache.cassandra.thrift.CassandraServer.doInsert(..))")
     public void writeToCommitLog(ProceedingJoinPoint thisJoinPoint) throws Throwable {
         if (ConfigurationStore.getStore().isCommitLogEnabled()) {
+          List<LogEntry> logEntries = null;
             try {
                 ConsistencyLevel consistencyLevel = (ConsistencyLevel) thisJoinPoint.getArgs()[0];
                 @SuppressWarnings("unchecked")
                 List<IMutation> mutations = (List<IMutation>) thisJoinPoint.getArgs()[1];
-                List<LogEntry> logEntries = writePending(consistencyLevel, mutations);
+                logEntries = writePending(consistencyLevel, mutations);
                 thisJoinPoint.proceed(thisJoinPoint.getArgs());
                 writeCommitted(logEntries);
-                // TODO: Catch Invalid Request separately, and remove the
-                // pending.
+            } catch (InvalidRequestException e) {
+                if(logEntries != null) {
+                    for(LogEntry logEntry : logEntries) {
+                        DistributedCommitLog.getLog().removeLogEntry(logEntry);
+                    }
+                }
             } catch (Throwable t) {
                 logger.error("Could not write to cassandra!", t);
                 t.printStackTrace();
