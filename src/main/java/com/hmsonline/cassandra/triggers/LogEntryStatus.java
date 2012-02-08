@@ -1,7 +1,7 @@
 package com.hmsonline.cassandra.triggers;
 
 public enum LogEntryStatus {
-    PREPARING, COMMITTED, COMPLETE; // ; is optional
+    PREPARING, COMMITTED, COMPLETE, ERROR; // ; is optional
 
     @Override
     public String toString() {

@@ -2,7 +2,9 @@ package com.hmsonline.cassandra.triggers;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.cassandra.db.ColumnFamily;
 import org.apache.cassandra.db.IColumn;
@@ -17,6 +19,7 @@ public class LogEntry {
     private LogEntryStatus status = null;
     private ByteBuffer rowKey = null;
     private String uuid = null;
+    private Map<String, String> errors = new HashMap<String, String>();
 
     public LogEntry() {
     }
@@ -91,6 +94,20 @@ public class LogEntry {
 
     public void setConsistencyLevel(ConsistencyLevel consistencyLevel) {
         this.consistencyLevel = consistencyLevel;
+    }
+
+    /**
+     * @return the errors
+     */
+    public Map<String, String> getErrors() {
+      return errors;
+    }
+
+    /**
+     * @param errors the errors to set
+     */
+    public void setErrors(Map<String, String> errors) {
+      this.errors = errors;
     }
 
 }

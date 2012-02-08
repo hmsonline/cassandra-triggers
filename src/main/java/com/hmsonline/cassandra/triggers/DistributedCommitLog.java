@@ -19,6 +19,7 @@ import org.apache.cassandra.thrift.Mutation;
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.utils.ByteBufferUtil;
+import org.apache.commons.collections.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,6 +96,11 @@ public class DistributedCommitLog extends CassandraStore {
         slice.add(getMutation("cf", logEntry.getColumnFamily()));
         slice.add(getMutation("row", logEntry.getRowKey()));
         slice.add(getMutation("status", logEntry.getStatus().toString()));
+        if(MapUtils.isNotEmpty(logEntry.getErrors())) {
+          for(String errorKey : logEntry.getErrors().keySet()) {
+            slice.add(getMutation(errorKey, logEntry.getErrors().get(errorKey)));
+          }
+        }
         for (ColumnOperation operation : logEntry.getOperations()) {
             if (operation.isDelete()) {
                 slice.add(getMutation(operation.getName(), "DELETE"));
@@ -116,6 +122,11 @@ public class DistributedCommitLog extends CassandraStore {
         ColumnPath path = new ColumnPath(COLUMN_FAMILY);
         getConnection(KEYSPACE)
                 .remove(ByteBufferUtil.bytes(logEntry.getUuid()), path, deleteTime, ConsistencyLevel.ALL);
+    }
+
+    public void errorLogEntry(LogEntry logEntry) throws Throwable {
+        logEntry.setConsistencyLevel(ConsistencyLevel.ALL);
+        DistributedCommitLog.getLog().writeLogEntry(logEntry);
     }
 
     // Utility Methods
