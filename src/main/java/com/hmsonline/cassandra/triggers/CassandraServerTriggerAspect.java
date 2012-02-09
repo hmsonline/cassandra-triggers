@@ -7,7 +7,9 @@ import org.apache.cassandra.db.IMutation;
 import org.apache.cassandra.db.RowMutation;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.InvalidRequestException;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.Logger;
@@ -28,20 +30,31 @@ public class CassandraServerTriggerAspect {
                 logEntries = writePending(consistencyLevel, mutations);
                 thisJoinPoint.proceed(thisJoinPoint.getArgs());
                 writeCommitted(logEntries);
-            } catch (InvalidRequestException e) {
-                if(logEntries != null) {
-                    for(LogEntry logEntry : logEntries) {
-                        DistributedCommitLog.getLog().removeLogEntry(logEntry);
-                    }
-                }
-            } catch (Throwable t) {
-                logger.error("Could not write to cassandra!", t);
-                t.printStackTrace();
-                throw t;
+            }
+            catch (InvalidRequestException e) {
+              if(logEntries != null) {
+                  for(LogEntry logEntry : logEntries) {
+                      DistributedCommitLog.getLog().removeLogEntry(logEntry);
+                  }
+              }
             }
         } else {
             thisJoinPoint.proceed(thisJoinPoint.getArgs());
         }
+    }
+
+    /**
+     * Logs an error message for unhandled exception thrown from the target method.
+     * 
+     * @param joinPoint - the joint point cut that contains information about the target
+     * @param throwable - the cause of the exception from the target method invocation
+     */
+    @AfterThrowing(pointcut = "execution(* org.apache.cassandra.thrift.CassandraServer.doInsert(..))", throwing = "throwable")
+    public void logErrorFromThrownException(final JoinPoint joinPoint, final Throwable throwable) {
+        final String className = joinPoint.getTarget().getClass().getName();
+        final String methodName = joinPoint.getSignature().getName();
+
+        logger.error("Could not write to cassandra! Method: " + className + "."+ methodName + "()", throwable);
     }
 
     private List<LogEntry> writePending(ConsistencyLevel consistencyLevel, List<IMutation> mutations) throws Throwable {
