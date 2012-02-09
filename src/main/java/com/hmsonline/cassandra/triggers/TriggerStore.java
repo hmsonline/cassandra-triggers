@@ -1,6 +1,7 @@
 package com.hmsonline.cassandra.triggers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ import org.apache.cassandra.thrift.KeySlice;
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.utils.ByteBufferUtil;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +24,7 @@ public class TriggerStore extends CassandraStore {
     public static final String KEYSPACE = "triggers";
     public static final String COLUMN_FAMILY = "Triggers";
     public static final String ENABLED = "enabled";
+    public static final String PAUSED = "PAUSED";
     private static TriggerStore instance = null;
 
     public TriggerStore(String keyspace, String columnFamily) throws Exception{
@@ -41,6 +44,9 @@ public class TriggerStore extends CassandraStore {
         return clazz.newInstance();
     }
 
+    @SuppressWarnings({
+        "unchecked", "rawtypes"
+    })
     public Map<String, List<Trigger>> getTriggers() throws Exception {
         // TODO: Cache this.
         Map<String, List<Trigger>> triggerMap = new HashMap<String, List<Trigger>>();
@@ -54,14 +60,25 @@ public class TriggerStore extends CassandraStore {
         ColumnParent parent = new ColumnParent(COLUMN_FAMILY);
         List<KeySlice> rows = getConnection(KEYSPACE).get_range_slices(parent, predicate, keyRange,
                 ConsistencyLevel.ALL);
+        rowsLoop:
         for (KeySlice slice : rows) {
             String columnFamily = ByteBufferUtil.string(slice.key);
             List<Trigger> triggers = new ArrayList<Trigger>();
             for (ColumnOrSuperColumn column : slice.columns) {
                 String className = ByteBufferUtil.string(column.column.name);
                 String enabled = ByteBufferUtil.string(column.column.value);
-                if (enabled.equals(ENABLED)) {
+                if(PAUSED.equals(StringUtils.upperCase(className))){
+                  if(ENABLED.equals(enabled)) {
+                    triggerMap.put(columnFamily, new ArrayList(Arrays.asList(new Trigger [] {new PausedTrigger()})));
+                    continue rowsLoop;
+                  } else {
+                    continue;
+                  }
+                } 
+                else {
+                  if (enabled.equals(ENABLED)) {
                     triggers.add(getTrigger(className));
+                  }
                 }
             }
             triggerMap.put(columnFamily, triggers);
