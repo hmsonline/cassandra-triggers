@@ -72,22 +72,13 @@ public class TriggerStore extends CassandraStore {
     for (ColumnOrSuperColumn column : slice.columns) {
       String className = ByteBufferUtil.string(column.column.name);
       String enabled = ByteBufferUtil.string(column.column.value);
-      if (PAUSED.equals(StringUtils.upperCase(className))) {
-        if (ENABLED.equals(enabled)) {
-          return new ArrayList(Arrays.asList(new Trigger[] {
-              new PausedTrigger()
-          }));
-        }
-        else {
-          // The pause is disabled so we do not want to process this as a normal
-          // class.  We should go to the next column.
-          continue;
-        }
+      if (PAUSED.equals(StringUtils.upperCase(className)) && ENABLED.equals(enabled)) {
+        return new ArrayList(Arrays.asList(new Trigger[] {
+            new PausedTrigger()
+        }));
       }
-      else {
-        if (enabled.equals(ENABLED)) {
-          triggers.add(getTrigger(className));
-        }
+      else if (enabled.equals(ENABLED)) {
+        triggers.add(getTrigger(className));
       }
     }
     return triggers;
