@@ -68,7 +68,6 @@ public class TriggerStore extends CassandraStore {
       "unchecked", "rawtypes"
   })
   private List<Trigger> processRow(KeySlice slice) throws Exception {
-
     List<Trigger> triggers = new ArrayList<Trigger>();
     for (ColumnOrSuperColumn column : slice.columns) {
       String className = ByteBufferUtil.string(column.column.name);
