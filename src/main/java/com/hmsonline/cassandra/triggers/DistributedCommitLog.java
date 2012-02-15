@@ -37,20 +37,17 @@ public class DistributedCommitLog extends CassandraStore {
     private static Timer triggerTimer = null;
     private static final long TRIGGER_FREQUENCY = 5000; // every X milliseconds
 
-    static {
-        triggerTimer = new Timer(true);
-        triggerTimer.schedule(new TriggerTask(), 0, TRIGGER_FREQUENCY);
-    }
-
-    
-    public DistributedCommitLog(String keyspace, String columnFamily) throws Exception{
+    public DistributedCommitLog(String keyspace, String columnFamily) throws Exception {
         super(keyspace, columnFamily);
         logger.debug("Instantiated distributed commit log.");
     }
-    
+
     public static synchronized DistributedCommitLog getLog() throws Exception {
-        if (instance == null)
+        if (instance == null) {
             instance = new DistributedCommitLog(KEYSPACE, COLUMN_FAMILY);
+            triggerTimer = new Timer(true);
+            triggerTimer.schedule(new TriggerTask(), 0, TRIGGER_FREQUENCY);
+        }
         return instance;
     }
 
@@ -106,10 +103,10 @@ public class DistributedCommitLog extends CassandraStore {
         slice.add(getMutation("cf", logEntry.getColumnFamily()));
         slice.add(getMutation("row", logEntry.getRowKey()));
         slice.add(getMutation("status", logEntry.getStatus().toString()));
-        if(MapUtils.isNotEmpty(logEntry.getErrors())) {
-          for(String errorKey : logEntry.getErrors().keySet()) {
-            slice.add(getMutation(errorKey, logEntry.getErrors().get(errorKey)));
-          }
+        if (MapUtils.isNotEmpty(logEntry.getErrors())) {
+            for (String errorKey : logEntry.getErrors().keySet()) {
+                slice.add(getMutation(errorKey, logEntry.getErrors().get(errorKey)));
+            }
         }
         for (ColumnOperation operation : logEntry.getOperations()) {
             if (operation.isDelete()) {

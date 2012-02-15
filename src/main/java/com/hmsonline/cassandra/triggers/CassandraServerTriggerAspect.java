@@ -19,13 +19,6 @@ import org.slf4j.LoggerFactory;
 @Aspect
 public class CassandraServerTriggerAspect {
     private static Logger logger = LoggerFactory.getLogger(CassandraServerTriggerAspect.class);
-    private static Timer triggerTimer = null;
-    private static final long TRIGGER_FREQUENCY = 5000; // every X milliseconds
-
-    static {
-        triggerTimer = new Timer(true);
-        triggerTimer.schedule(new TriggerTask(), 0, TRIGGER_FREQUENCY);
-    }
     
     @Around("execution(* org.apache.cassandra.thrift.CassandraServer.doInsert(..))")
     public void writeToCommitLog(ProceedingJoinPoint thisJoinPoint) throws Throwable {
