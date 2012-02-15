@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <aspectj>
 	<aspects>
-		<aspect name="com.hmsonline.cassandra.triggers.CassandraServerTriggerAspect" />
+    <aspect name="com.hmsonline.cassandra.triggers.CassandraServerTriggerAspect" />
+    <aspect name="com.hmsonline.cassandra.triggers.IndexTrigger" />
 	</aspects>
 
 	<weaver options="-verbose">

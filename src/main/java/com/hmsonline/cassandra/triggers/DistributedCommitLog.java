@@ -20,6 +20,7 @@ import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.commons.collections.MapUtils;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,6 +128,27 @@ public class DistributedCommitLog extends CassandraStore {
     public void errorLogEntry(LogEntry logEntry) throws Throwable {
         logEntry.setConsistencyLevel(ConsistencyLevel.ALL);
         DistributedCommitLog.getLog().writeLogEntry(logEntry);
+    }
+
+    @SuppressWarnings("unchecked")
+    public JSONObject getSlice(String keyspace, String columnFamily, String key, ConsistencyLevel consistencyLevel) throws Exception {
+      JSONObject json = null;
+
+      SlicePredicate predicate = new SlicePredicate();
+      SliceRange range = new SliceRange(ByteBufferUtil.bytes(""), ByteBufferUtil.bytes(""), false, 1000);
+      predicate.setSlice_range(range);
+      ColumnParent parent = new ColumnParent(columnFamily);
+      List<ColumnOrSuperColumn> slice = getConnection(keyspace).get_slice(ByteBufferUtil.bytes(key), parent, predicate,
+              consistencyLevel);
+
+      if (slice.size() > 0) {
+          json = new JSONObject();
+          for (ColumnOrSuperColumn column : slice) {
+              Column col = column.getColumn();
+              json.put(new String(col.getName(), "UTF8"), new String(col.getValue(), "UTF8"));
+          }
+      }
+      return json;
     }
 
     // Utility Methods

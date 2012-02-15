@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 public class TriggerTest {
 
+  public static final String CASSANDRA_HOST = "localhost";
   public static final String KEYSPACE = "Keyspace1";
   public static final String CF1 = "Indexed1";
   public static final String CF2 = "Standard1";
@@ -44,12 +45,11 @@ public class TriggerTest {
     cassandraService.activate();
 
     loadSchema(KEYSPACE, Arrays.asList(CF1, CF2));
-//    loadSchema("triggers", Arrays.asList("Triggers", "Configuration"));
   }
 
   @org.junit.Test
   public void testThrowingExceptionWhenInsertingColumn() throws Throwable {
-    TTransport tr = new TFramedTransport(new TSocket("localhost", 9160));
+    TTransport tr = new TFramedTransport(new TSocket(CASSANDRA_HOST, 9160));
     TProtocol proto = new TBinaryProtocol(tr);
     Cassandra.Client client = new Cassandra.Client(proto);
     tr.open();
@@ -61,13 +61,14 @@ public class TriggerTest {
     ColumnParent parent = new ColumnParent(CF2);
 
     Column nameColumn = new Column(COLUMN);
-    nameColumn.setValue(COLUMN);
+    nameColumn.setValue(VALUE);
     nameColumn.setTimestamp(timestamp);
 
     try {
-    client.insert(ByteBufferUtil.bytes(rowkeyId), parent, nameColumn,
-            ConsistencyLevel.ONE);
-    } catch (org.apache.thrift.TApplicationException ex) {
+      client.insert(ByteBufferUtil.bytes(rowkeyId), parent, nameColumn, ConsistencyLevel.ONE);
+      org.junit.Assert.fail("Should have thrown some Exception");
+    }
+    catch (org.apache.thrift.TApplicationException ex) {
       logger.warn("expected=" + ex.getClass());
       org.junit.Assert.assertEquals("Internal error processing insert", ex.getMessage());
     }
@@ -84,7 +85,8 @@ public class TriggerTest {
 
     CFMetaData[] cfDefs = new CFMetaData[colFamilyNames.size()];
     for (int i=0; i < colFamilyNames.size(); i++) {
-      CFMetaData cfDef = new CFMetaData(KEYSPACE, colFamilyNames.get(i), ColumnFamilyType.Standard, UTF8Type.instance, null);
+      CFMetaData cfDef = new CFMetaData(KEYSPACE, colFamilyNames.get(i), ColumnFamilyType.Standard, UTF8Type.instance,
+              null).keyValidator(UTF8Type.instance).defaultValidator(UTF8Type.instance);
       cfDefs[i] = cfDef;
     }
 
