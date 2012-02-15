@@ -45,7 +45,6 @@ public class TriggerTest {
     cassandraService.activate();
 
     loadSchema(KEYSPACE, Arrays.asList(CF1, CF2));
-//    loadSchema("triggers", Arrays.asList("Triggers", "Configuration"));
   }
 
   @org.junit.Test
@@ -66,10 +65,10 @@ public class TriggerTest {
     nameColumn.setTimestamp(timestamp);
 
     try {
-    client.insert(ByteBufferUtil.bytes(rowkeyId), parent, nameColumn,
-            ConsistencyLevel.ONE);
+      client.insert(ByteBufferUtil.bytes(rowkeyId), parent, nameColumn, ConsistencyLevel.ONE);
       org.junit.Assert.fail("Should have thrown some Exception");
-    } catch (org.apache.thrift.TApplicationException ex) {
+    }
+    catch (org.apache.thrift.TApplicationException ex) {
       logger.warn("expected=" + ex.getClass());
       org.junit.Assert.assertEquals("Internal error processing insert", ex.getMessage());
     }

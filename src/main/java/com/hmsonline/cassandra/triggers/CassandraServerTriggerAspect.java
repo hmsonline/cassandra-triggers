@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 public class CassandraServerTriggerAspect {
     private static Logger logger = LoggerFactory.getLogger(CassandraServerTriggerAspect.class);
 
+    //TODO: handle non-Thrift: org.apache.cassandra.db.RowMutation.apply()
     @Around("execution(* org.apache.cassandra.thrift.CassandraServer.doInsert(..))")
     public void writeToCommitLog(ProceedingJoinPoint thisJoinPoint) throws Throwable {
         if (ConfigurationStore.getStore().isCommitLogEnabled()) {

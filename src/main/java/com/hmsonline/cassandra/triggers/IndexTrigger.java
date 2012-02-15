@@ -1,6 +1,7 @@
 package com.hmsonline.cassandra.triggers;
 
 import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.apache.cassandra.utils.ByteBufferUtil;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.AfterThrowing;
@@ -12,7 +13,7 @@ import org.slf4j.LoggerFactory;
 @Aspect
 public class IndexTrigger implements Trigger {
 
-  private static Logger logger = LoggerFactory.getLogger(CassandraServerTriggerAspect.class);
+  private static Logger logger = LoggerFactory.getLogger(IndexTrigger.class);
 
   private Indexer indexer = null;
 
@@ -24,22 +25,15 @@ public class IndexTrigger implements Trigger {
   }
 
   public void process(LogEntry logEntry) {
+    ConsistencyLevel consistencyLevel = logEntry.getConsistencyLevel();
     String keyspace = logEntry.getKeyspace();
     String columnFamily = logEntry.getColumnFamily();
-    String rowKey = logEntry.getUuid();
-    ConsistencyLevel consistencyLevel = logEntry.getConsistencyLevel();
-
-    boolean isDeletedEntry = false;
-    for (ColumnOperation operation : logEntry.getOperations()) {
-      if (operation.isDelete()) {
-        isDeletedEntry = true;
-        break;
-      }
-    }
-
-    indexer = getIndexer(System.getProperty("solrHost")); 
     try {
-      if (isDeletedEntry) {
+      String rowKey = ByteBufferUtil.string(logEntry.getRowKey());// logEntry.getUuid();
+
+      indexer = getIndexer(System.getProperty("solrHost"));
+      logger.debug("solr enabled: " + indexer.toString());
+      if (isMarkedForDelete(logEntry)) {
         indexer.delete(columnFamily, rowKey);
       }
       else {
@@ -52,8 +46,9 @@ public class IndexTrigger implements Trigger {
     }
   }
 
+  //TODO - dq: migrate AOP to CassandraServerTriggerAspect and refactor
   @After("execution(* com.hmsonline.cassandra.triggers.DistributedCommitLog.writeLogEntry(..))")
-//  @After("execution(* com.hmsonline.cassandra.triggers.CassandraServerTriggerAspect.writeCommitted(..))")
+  // @After("execution(* com.hmsonline.cassandra.triggers.CassandraServerTriggerAspect.writeCommitted(..))")
   public void indexToSolr(JoinPoint thisJoinPoint) throws Throwable {
     if (System.getProperty("solrHost") == null) {
       return;
@@ -71,6 +66,20 @@ public class IndexTrigger implements Trigger {
     final String methodName = joinPoint.getSignature().getName();
 
     logger.error("Could not write committed log! Method: " + className + "." + methodName + "()", throwable);
+  }
+
+  //
+  // PRIVATE METHODS
+  //
+  private boolean isMarkedForDelete(LogEntry logEntry) {
+    boolean isDeletedEntry = false;
+    for (ColumnOperation operation : logEntry.getOperations()) {
+      if (operation.isDelete()) {
+        isDeletedEntry = true;
+        break;
+      }
+    }
+    return isDeletedEntry;
   }
 
 }
