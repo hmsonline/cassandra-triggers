@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
 
 import org.apache.cassandra.db.ColumnFamily;
 import org.apache.cassandra.db.RowMutation;
@@ -33,6 +34,15 @@ public class DistributedCommitLog extends CassandraStore {
     public static final int IN_FUTURE = 1000 * 60;
     private static DistributedCommitLog instance = null;
 
+    private static Timer triggerTimer = null;
+    private static final long TRIGGER_FREQUENCY = 5000; // every X milliseconds
+
+    static {
+        triggerTimer = new Timer(true);
+        triggerTimer.schedule(new TriggerTask(), 0, TRIGGER_FREQUENCY);
+    }
+
+    
     public DistributedCommitLog(String keyspace, String columnFamily) throws Exception{
         super(keyspace, columnFamily);
         logger.debug("Instantiated distributed commit log.");
