@@ -2,6 +2,7 @@ package com.hmsonline.cassandra.triggers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
 
 import org.apache.cassandra.db.IMutation;
 import org.apache.cassandra.db.RowMutation;
@@ -18,7 +19,14 @@ import org.slf4j.LoggerFactory;
 @Aspect
 public class CassandraServerTriggerAspect {
     private static Logger logger = LoggerFactory.getLogger(CassandraServerTriggerAspect.class);
+    private static Timer triggerTimer = null;
+    private static final long TRIGGER_FREQUENCY = 5000; // every X milliseconds
 
+    static {
+        triggerTimer = new Timer(true);
+        triggerTimer.schedule(new TriggerTask(), 0, TRIGGER_FREQUENCY);
+    }
+    
     @Around("execution(* org.apache.cassandra.thrift.CassandraServer.doInsert(..))")
     public void writeToCommitLog(ProceedingJoinPoint thisJoinPoint) throws Throwable {
         if (ConfigurationStore.getStore().isCommitLogEnabled()) {
