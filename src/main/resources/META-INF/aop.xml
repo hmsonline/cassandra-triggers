@@ -3,11 +3,4 @@
 	<aspects>
 		<aspect name="com.hmsonline.cassandra.triggers.CassandraServerTriggerAspect" />
 	</aspects>
-
-	<weaver options="-verbose">
-		<include within="javax.*" />
-		<include within="org.aspectj.*" />
-		<include within="com.hmsonline.cassandra.triggers.*" />
-	</weaver>
-
 </aspectj>
