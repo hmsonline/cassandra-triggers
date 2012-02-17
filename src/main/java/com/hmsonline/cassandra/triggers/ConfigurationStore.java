@@ -44,6 +44,15 @@ public class ConfigurationStore extends CassandraStore {
         return false;
     }
 
+    public boolean shouldWriteColumns() throws Throwable {
+        Map<String, String> commitLogProperties = this.getConfiguration().get("CommitLog");
+        if (commitLogProperties != null) {
+            String writeColumns = commitLogProperties.get("writeColumns");
+            return (writeColumns != null && writeColumns.equals("true"));
+        }
+        return false;
+    }
+
     public Map<String, Map<String, String>> getConfiguration() throws Throwable {
         long currentTime = System.currentTimeMillis();
         long timeSinceRefresh = currentTime - this.lastFetchTime;

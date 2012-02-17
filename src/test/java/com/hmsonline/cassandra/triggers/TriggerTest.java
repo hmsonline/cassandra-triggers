@@ -27,71 +27,39 @@ import org.apache.thrift.transport.TTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TriggerTest {
+public class TriggerTest extends AbstractTriggerTest {
 
-  public static final String KEYSPACE = "Keyspace1";
-  public static final String CF1 = "Indexed1";
-  public static final String CF2 = "Standard1";
-  public static final ByteBuffer COLUMN = ByteBufferUtil.bytes("2012-01-01_12:12:12");
-  public static final ByteBuffer VALUE = ByteBufferUtil.bytes("{\"observation\":\"8\"}");
+    public static final ByteBuffer COLUMN = ByteBufferUtil.bytes("2012-01-01_12:12:12");
+    public static final ByteBuffer VALUE = ByteBufferUtil.bytes("{\"observation\":\"8\"}");
 
-  private static Logger logger = LoggerFactory.getLogger(TriggerTest.class);
+    private static Logger logger = LoggerFactory.getLogger(TriggerTest.class);
 
-  @org.junit.Before
-  public void setUp() {
-//    CassandraDaemon.main(null);
-    CassandraDaemon cassandraService = new CassandraDaemon();
-    cassandraService.activate();
+    @org.junit.Test
+    public void testThrowingExceptionWhenInsertingColumn() throws Throwable {
+        TTransport tr = new TFramedTransport(new TSocket("localhost", 9160));
+        TProtocol proto = new TBinaryProtocol(tr);
+        Cassandra.Client client = new Cassandra.Client(proto);
+        tr.open();
 
-    loadSchema(KEYSPACE, Arrays.asList(CF1, CF2));
-//    loadSchema("triggers", Arrays.asList("Triggers", "Configuration"));
-  }
+        String rowkeyId = "PI123";
+        long timestamp = System.currentTimeMillis();
 
-  @org.junit.Test
-  public void testThrowingExceptionWhenInsertingColumn() throws Throwable {
-    TTransport tr = new TFramedTransport(new TSocket("localhost", 9160));
-    TProtocol proto = new TBinaryProtocol(tr);
-    Cassandra.Client client = new Cassandra.Client(proto);
-    tr.open();
+        client.set_keyspace(DATA_KEYSPACE);
+        ColumnParent parent = new ColumnParent(DATA_CF2);
 
-    String rowkeyId = "PI123";
-    long timestamp = System.currentTimeMillis();
+        Column nameColumn = new Column(COLUMN);
+        nameColumn.setValue(COLUMN);
+        nameColumn.setTimestamp(timestamp);
 
-    client.set_keyspace(KEYSPACE);
-    ColumnParent parent = new ColumnParent(CF2);
+        try {
+            client.insert(ByteBufferUtil.bytes(rowkeyId), parent, nameColumn, ConsistencyLevel.ONE);
+        } catch (org.apache.thrift.TApplicationException ex) {
+            logger.warn("expected=" + ex.getClass());
+            org.junit.Assert.assertEquals("Internal error processing insert", ex.getMessage());
+        }
 
-    Column nameColumn = new Column(COLUMN);
-    nameColumn.setValue(COLUMN);
-    nameColumn.setTimestamp(timestamp);
-
-    try {
-    client.insert(ByteBufferUtil.bytes(rowkeyId), parent, nameColumn,
-            ConsistencyLevel.ONE);
-    } catch (org.apache.thrift.TApplicationException ex) {
-      logger.warn("expected=" + ex.getClass());
-      org.junit.Assert.assertEquals("Internal error processing insert", ex.getMessage());
+        tr.flush();
+        tr.close();
     }
-
-    tr.flush();
-    tr.close();
-  }
-
-  private void loadSchema(String keyspaceName, List<String> colFamilyNames) {
-    List<KSMetaData> schema = new ArrayList<KSMetaData>();
-
-    Class<? extends AbstractReplicationStrategy> strategyClass = SimpleStrategy.class;
-    Map<String, String> strategyOptions = KSMetaData.optsWithRF(1);
-
-    CFMetaData[] cfDefs = new CFMetaData[colFamilyNames.size()];
-    for (int i=0; i < colFamilyNames.size(); i++) {
-      CFMetaData cfDef = new CFMetaData(KEYSPACE, colFamilyNames.get(i), ColumnFamilyType.Standard, UTF8Type.instance, null);
-      cfDefs[i] = cfDef;
-    }
-
-    KSMetaData validKsMetadata = KSMetaData.testMetadata(keyspaceName, strategyClass, strategyOptions, cfDefs);
-    schema.add(validKsMetadata);
-
-    Schema.instance.load(schema, Schema.instance.getVersion());
-  }
 
 }
