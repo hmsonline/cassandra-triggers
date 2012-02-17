@@ -20,11 +20,14 @@ public class LogEntry {
     private ByteBuffer rowKey = null;
     private String uuid = null;
     private Map<String, String> errors = new HashMap<String, String>();
+    private String macAddress = null;
+    private long timestamp = -1;
 
     public LogEntry() {
     }
 
-    public LogEntry(String keyspace, ColumnFamily columnFamily, ByteBuffer rowKey, ConsistencyLevel consistencyLevel)
+    public LogEntry(String keyspace, ColumnFamily columnFamily, ByteBuffer rowKey, ConsistencyLevel consistencyLevel,
+            String macAddress, long timestamp)
             throws Throwable {
         this.columnFamily = columnFamily.metadata().cfName;
         this.keyspace = keyspace;
@@ -38,6 +41,24 @@ public class LogEntry {
         this.uuid = UUIDGen.getUUID(ByteBuffer.wrap(UUIDGen.getTimeUUIDBytes())).toString();
         this.status = LogEntryStatus.PREPARING;
         this.consistencyLevel = consistencyLevel;
+        this.timestamp = timestamp;
+        this.macAddress = macAddress;
+    }
+
+    public String getMacAddress() {
+        return macAddress;
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 
     public String getKeyspace() {
@@ -96,16 +117,10 @@ public class LogEntry {
         this.consistencyLevel = consistencyLevel;
     }
 
-    /**
-     * @return the errors
-     */
     public Map<String, String> getErrors() {
       return errors;
     }
 
-    /**
-     * @param errors the errors to set
-     */
     public void setErrors(Map<String, String> errors) {
       this.errors = errors;
     }

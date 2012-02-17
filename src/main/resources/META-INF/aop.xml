@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <aspectj>
 	<aspects>
-		<aspect name="com.hmsonline.cassandra.triggers.CassandraServerTriggerAspect" />
+		<aspect
+			name="com.hmsonline.cassandra.triggers.CassandraServerTriggerAspect" />
 	</aspects>
+
+	<weaver options="-showWeaveInfo">
+		<include within="org.apache.cassandra.thrift.*" />
+	</weaver>
 </aspectj>

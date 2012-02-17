@@ -2,7 +2,6 @@ package com.hmsonline.cassandra.triggers;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
 
 import org.apache.cassandra.db.IMutation;
 import org.apache.cassandra.db.RowMutation;
