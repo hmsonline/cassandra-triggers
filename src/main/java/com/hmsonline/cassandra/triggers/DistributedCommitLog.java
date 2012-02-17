@@ -1,10 +1,12 @@
 package com.hmsonline.cassandra.triggers;
 
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,9 +48,11 @@ public class DistributedCommitLog extends CassandraStore {
     public DistributedCommitLog(String keyspace, String columnFamily) throws Exception {
         super(keyspace, columnFamily);
         logger.debug("Instantiated distributed commit log.");
+        this.getHostName();
         triggerTimer = new Timer(true);
         triggerTimer.schedule(new TriggerTask(), 0, TRIGGER_FREQUENCY);
         Log.debug("Started Trigger Task thread.");
+
     }
 
     public static synchronized DistributedCommitLog getLog() throws Exception {
@@ -177,14 +181,25 @@ public class DistributedCommitLog extends CassandraStore {
         return m;
     }
 
-    public String getHostName() throws UnknownHostException {
-        if (hostName == null) {
-            java.net.InetAddress localMachine = InetAddress.getLocalHost();
-            logger.debug ("Hostname of local machine: " + localMachine.getHostName());
-            hostName = localMachine.getHostName();
+  public String getHostName() throws SocketException {
+    if (hostName == null) {
+      Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+      {
+        while (interfaces.hasMoreElements()) {
+          NetworkInterface nic = interfaces.nextElement();
+          Enumeration<InetAddress> addresses = nic.getInetAddresses();
+          while (hostName == null && addresses.hasMoreElements()) {
+            InetAddress address = addresses.nextElement();
+            if (!address.isLoopbackAddress()) {
+              hostName = address.getHostName();
+              logger.debug("Hostname of local machine: " + hostName);
+            }
+          }
         }
-        return this.hostName;
+      }
     }
+    return this.hostName;
+  }
     
     public boolean isMine(LogEntry logEntry) throws UnknownHostException, SocketException{
         return (logEntry.getMacAddress().equals(this.getHostName()));
