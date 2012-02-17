@@ -78,23 +78,12 @@
 	        <target>1.5</target>
 	      </configuration>
 	    </plugin>
-<!-- Disabling the compile time weaving 
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>aspectj-maven-plugin</artifactId>
 				<version>1.4</version>
 				<configuration>
 					<complianceLevel>1.5</complianceLevel>
-					<weaveDependencies>
-						<weaveDependency>
-							<groupId>org.apache.cassandra</groupId>
-							<artifactId>cassandra-thrift</artifactId>
-						</weaveDependency>
-						<weaveDependency>
-							<groupId>org.apache.cassandra</groupId>
-							<artifactId>cassandra-all</artifactId>
-						</weaveDependency>
-					</weaveDependencies>
 				</configuration>
 				<executions>
 					<execution>
@@ -104,7 +93,6 @@
 					</execution>
 				</executions>
 			</plugin>
--->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>

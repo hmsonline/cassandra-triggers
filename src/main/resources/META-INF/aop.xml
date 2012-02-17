@@ -5,7 +5,7 @@
 			name="com.hmsonline.cassandra.triggers.CassandraServerTriggerAspect" />
 	</aspects>
 
-	<weaver options="-showWeaveInfo">
-		<include within="org.apache.cassandra.thrift.*" />
+	<weaver options="-showWeaveInfo -verbose">
+		<include within="org.apache.cassandra.thrift.CassandraServer" />
 	</weaver>
 </aspectj>
