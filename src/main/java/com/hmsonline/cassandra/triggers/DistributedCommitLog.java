@@ -35,7 +35,7 @@ public class DistributedCommitLog extends CassandraStore {
 
     public static final String KEYSPACE = "triggers";
     public static final String COLUMN_FAMILY = "CommitLog";
-    public static final int MAX_ROW_SIZE = 10;
+    public static final int MAX_NUMBER_COLUMNS = 1000;
     public static final int BATCH_SIZE = 50;
     public static final int IN_FUTURE = 1000 * 60;
     private static DistributedCommitLog instance = null;
@@ -79,7 +79,7 @@ public class DistributedCommitLog extends CassandraStore {
 
     public List<LogEntry> getPending() throws Throwable {
         SlicePredicate predicate = new SlicePredicate();
-        SliceRange range = new SliceRange(ByteBufferUtil.bytes(""), ByteBufferUtil.bytes(""), false, MAX_ROW_SIZE);
+        SliceRange range = new SliceRange(ByteBufferUtil.bytes(""), ByteBufferUtil.bytes(""), false, MAX_NUMBER_COLUMNS);
         predicate.setSlice_range(range);
 
         KeyRange keyRange = new KeyRange(BATCH_SIZE);
