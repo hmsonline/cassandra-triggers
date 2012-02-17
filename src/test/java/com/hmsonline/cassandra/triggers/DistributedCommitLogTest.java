@@ -1,6 +1,7 @@
 package com.hmsonline.cassandra.triggers;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import org.apache.cassandra.db.ColumnFamily;
 import org.apache.cassandra.thrift.ConsistencyLevel;
@@ -17,6 +18,9 @@ public class DistributedCommitLogTest extends AbstractTriggerTest {
         String host = DistributedCommitLog.getLog().getHostName();        
         LogEntry logEntry = new LogEntry(AbstractTriggerTest.DATA_KEYSPACE, columnFamily, rowKey, ConsistencyLevel.ALL,
                 host, System.currentTimeMillis());
-        DistributedCommitLog.getLog().writeLogEntry(logEntry);        
+        DistributedCommitLog.getLog().writeLogEntry(logEntry);     
+        
+        List<LogEntry> logEntries = DistributedCommitLog.getLog().getPending();
+        assert(logEntries.size() == 1);
     }
 }
