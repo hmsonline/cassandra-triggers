@@ -1,7 +1,6 @@
 package com.hmsonline.cassandra.triggers;
 
 import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -42,7 +41,7 @@ public class DistributedCommitLog extends CassandraStore {
     private static Timer triggerTimer = null;
     private static final long TRIGGER_FREQUENCY = 5000; // every X milliseconds
     private static final long MAX_LOG_ENTRY_AGE = 5000; // age of entry, at which time any node can process it.
-    private String macAddress = null;
+    private String hostName = null;
 
     public DistributedCommitLog(String keyspace, String columnFamily) throws Exception {
         super(keyspace, columnFamily);
@@ -65,8 +64,8 @@ public class DistributedCommitLog extends CassandraStore {
         List<LogEntry> entries = new ArrayList<LogEntry>();
         for (Integer cfId : rowMutation.getColumnFamilyIds()) {
             ColumnFamily columnFamily = rowMutation.getColumnFamily(cfId);
-            String macAddress = this.getMacAddress();
-            LogEntry entry = new LogEntry(keyspace, columnFamily, rowKey, consistencyLevel, macAddress,
+            String hostName = this.getHostName();
+            LogEntry entry = new LogEntry(keyspace, columnFamily, rowKey, consistencyLevel, hostName,
                     System.currentTimeMillis());
             entries.add(entry);
             writeLogEntry(entry);
@@ -178,22 +177,17 @@ public class DistributedCommitLog extends CassandraStore {
         return m;
     }
 
-    public String getMacAddress() throws UnknownHostException, SocketException {
-        if (macAddress == null) {
-            InetAddress ip = InetAddress.getLocalHost();
-            NetworkInterface network = NetworkInterface.getByInetAddress(ip);
-            byte[] mac = network.getHardwareAddress();
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < mac.length; i++) {
-                sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
-            }
-            macAddress = sb.toString();
+    public String getHostName() throws UnknownHostException {
+        if (hostName == null) {
+            java.net.InetAddress localMachine = InetAddress.getLocalHost();
+            logger.debug ("Hostname of local machine: " + localMachine.getHostName());
+            hostName = localMachine.getHostName();
         }
-        return this.macAddress;
+        return this.hostName;
     }
     
     public boolean isMine(LogEntry logEntry) throws UnknownHostException, SocketException{
-        return (logEntry.getMacAddress().equals(this.getMacAddress()));
+        return (logEntry.getMacAddress().equals(this.getHostName()));
     }
     
     public boolean isOld(LogEntry logEntry){
