@@ -20,14 +20,22 @@ public class LogEntry {
     private ByteBuffer rowKey = null;
     private String uuid = null;
     private Map<String, String> errors = new HashMap<String, String>();
-    private String macAddress = null;
+    private String host = null;
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
     private long timestamp = -1;
 
     public LogEntry() {
     }
 
     public LogEntry(String keyspace, ColumnFamily columnFamily, ByteBuffer rowKey, ConsistencyLevel consistencyLevel,
-            String macAddress, long timestamp)
+            String host, long timestamp)
             throws Throwable {
         this.columnFamily = columnFamily.metadata().cfName;
         this.keyspace = keyspace;
@@ -42,15 +50,7 @@ public class LogEntry {
         this.status = LogEntryStatus.PREPARING;
         this.consistencyLevel = consistencyLevel;
         this.timestamp = timestamp;
-        this.macAddress = macAddress;
-    }
-
-    public String getMacAddress() {
-        return macAddress;
-    }
-
-    public void setMacAddress(String macAddress) {
-        this.macAddress = macAddress;
+        this.host = host;
     }
 
     public long getTimestamp() {
@@ -83,6 +83,10 @@ public class LogEntry {
 
     public void setOperations(List<ColumnOperation> operations) {
         this.operations = operations;
+    }
+
+    public void addOperation(ColumnOperation operation) {
+        operations.add(operation);
     }
 
     public LogEntryStatus getStatus() {
