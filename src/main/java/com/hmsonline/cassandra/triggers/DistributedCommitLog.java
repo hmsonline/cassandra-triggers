@@ -35,14 +35,16 @@ public class DistributedCommitLog extends CassandraStore {
 
     public static final String KEYSPACE = "triggers";
     public static final String COLUMN_FAMILY = "CommitLog";
-    public static final int MAX_ROW_SIZE = 10;
+    public static final int MAX_NUMBER_COLUMNS = 1000;
     public static final int BATCH_SIZE = 50;
     public static final int IN_FUTURE = 1000 * 60;
     private static DistributedCommitLog instance = null;
 
     private static Timer triggerTimer = null;
     private static final long TRIGGER_FREQUENCY = 5000; // every X milliseconds
-    private static final long MAX_LOG_ENTRY_AGE = 5000; // age of entry, at which time any node can process it.
+    private static final long MAX_LOG_ENTRY_AGE = 5000; // age of entry, at
+                                                        // which time any node
+                                                        // can process it.
     private String hostName = null;
 
     public DistributedCommitLog(String keyspace, String columnFamily) throws Exception {
@@ -79,7 +81,7 @@ public class DistributedCommitLog extends CassandraStore {
 
     public List<LogEntry> getPending() throws Throwable {
         SlicePredicate predicate = new SlicePredicate();
-        SliceRange range = new SliceRange(ByteBufferUtil.bytes(""), ByteBufferUtil.bytes(""), false, MAX_ROW_SIZE);
+        SliceRange range = new SliceRange(ByteBufferUtil.bytes(""), ByteBufferUtil.bytes(""), false, MAX_NUMBER_COLUMNS);
         predicate.setSlice_range(range);
 
         KeyRange keyRange = new KeyRange(BATCH_SIZE);
@@ -105,7 +107,11 @@ public class DistributedCommitLog extends CassandraStore {
                     } else if (ByteBufferUtil.string(cc.column.name).equals("timestamp")) {
                         logEntry.setTimestamp(Long.valueOf(ByteBufferUtil.string(cc.column.value)));
                     } else if (ByteBufferUtil.string(cc.column.name).equals("host")) {
-                        logEntry.setMacAddress(ByteBufferUtil.string(cc.column.value));
+                        logEntry.setHost(ByteBufferUtil.string(cc.column.value));
+                    } else if (ConfigurationStore.getStore().shouldWriteColumns()){
+                        ColumnOperation operation = new ColumnOperation();
+                        operation.setName(cc.column.name);
+                        operation.setOperationType(cc.column.value);
                     }
                 }
                 logEntries.add(logEntry);
@@ -121,17 +127,20 @@ public class DistributedCommitLog extends CassandraStore {
         slice.add(getMutation("row", logEntry.getRowKey()));
         slice.add(getMutation("status", logEntry.getStatus().toString()));
         slice.add(getMutation("timestamp", Long.toString(logEntry.getTimestamp())));
-        slice.add(getMutation("host", logEntry.getMacAddress()));
+        slice.add(getMutation("host", logEntry.getHost()));
         if (MapUtils.isNotEmpty(logEntry.getErrors())) {
             for (String errorKey : logEntry.getErrors().keySet()) {
                 slice.add(getMutation(errorKey, logEntry.getErrors().get(errorKey)));
             }
         }
-        for (ColumnOperation operation : logEntry.getOperations()) {
-            if (operation.isDelete()) {
-                slice.add(getMutation(operation.getName(), "DELETE"));
-            } else {
-                slice.add(getMutation(operation.getName(), "UPDATE"));
+
+        if (ConfigurationStore.getStore().shouldWriteColumns()) {
+            for (ColumnOperation operation : logEntry.getOperations()) {
+                if (operation.isDelete()) {
+                    slice.add(getMutation(operation.getName(), OperationType.DELETE));
+                } else {
+                    slice.add(getMutation(operation.getName(), OperationType.UPDATE));
+                }
             }
         }
         Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
@@ -164,8 +173,8 @@ public class DistributedCommitLog extends CassandraStore {
         return getMutation(ByteBufferUtil.bytes(name), value);
     }
 
-    private Mutation getMutation(ByteBuffer name, String value) {
-        return getMutation(name, ByteBufferUtil.bytes(value));
+    private Mutation getMutation(ByteBuffer name, OperationType value) {
+        return getMutation(name, ByteBufferUtil.bytes(value.toString()));
     }
 
     private Mutation getMutation(ByteBuffer name, ByteBuffer value) {
@@ -181,31 +190,31 @@ public class DistributedCommitLog extends CassandraStore {
         return m;
     }
 
-  public String getHostName() throws SocketException {
-    if (hostName == null) {
-      Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-      {
-        while (interfaces.hasMoreElements()) {
-          NetworkInterface nic = interfaces.nextElement();
-          Enumeration<InetAddress> addresses = nic.getInetAddresses();
-          while (hostName == null && addresses.hasMoreElements()) {
-            InetAddress address = addresses.nextElement();
-            if (!address.isLoopbackAddress()) {
-              hostName = address.getHostName();
-              logger.debug("Hostname of local machine: " + hostName);
+    public String getHostName() throws SocketException {
+        if (hostName == null) {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            {
+                while (interfaces.hasMoreElements()) {
+                    NetworkInterface nic = interfaces.nextElement();
+                    Enumeration<InetAddress> addresses = nic.getInetAddresses();
+                    while (hostName == null && addresses.hasMoreElements()) {
+                        InetAddress address = addresses.nextElement();
+                        if (!address.isLoopbackAddress()) {
+                            hostName = address.getHostName();
+                            logger.debug("Host ID: " + hostName);
+                        }
+                    }
+                }
             }
-          }
         }
-      }
+        return this.hostName;
     }
-    return this.hostName;
-  }
-    
-    public boolean isMine(LogEntry logEntry) throws UnknownHostException, SocketException{
-        return (logEntry.getMacAddress().equals(this.getHostName()));
+
+    public boolean isMine(LogEntry logEntry) throws UnknownHostException, SocketException {
+        return (logEntry.getHost().equals(this.getHostName()));
     }
-    
-    public boolean isOld(LogEntry logEntry){
+
+    public boolean isOld(LogEntry logEntry) {
         long now = System.currentTimeMillis();
         long age = now - logEntry.getTimestamp();
         return (age > DistributedCommitLog.MAX_LOG_ENTRY_AGE);
