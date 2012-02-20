@@ -6,7 +6,7 @@ Cassandra is an excellent flexible, scalable storage mechanism, but for many rea
 
 All of this logic could be built into the application, but if you want to shield your clients from all that complexity, you could build that into triggers.
 
-Maxim Grinev does a wonderful job capturing the motivation for triggers in his [http://maxgrinev.com/2010/07/23/extending-cassandra-with-asynchronous-triggers/](blog post).  
+Maxim Grinev does a wonderful job capturing the motivation for triggers in his [blog post](http://maxgrinev.com/2010/07/23/extending-cassandra-with-asynchronous-triggers/).  
 
 # The Implementation
 
@@ -14,6 +14,7 @@ Our implementation uses AOP within the Cassandra Server itself to record mutatio
 
 To get started, look at:
 
-[Installation](Installation)
+[Installation](https://github.com/hmsonline/cassandra-triggers/wiki/installation)
 
-[Configuration](Configuration)
+[Configuration](https://github.com/hmsonline/cassandra-triggers/wiki/configuration)
+
