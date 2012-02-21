@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +30,7 @@ public class TriggerTask extends TimerTask {
                                     + "]:[" + logEntry.getColumnFamily() + "]");
                             String path = logEntry.getKeyspace() + ":" + logEntry.getColumnFamily();
                             List<Trigger> triggers = triggerMap.get(path);
-                            if (CollectionUtils.isNotEmpty(triggers) && triggers.get(0) instanceof PausedTrigger) {
+                            if (triggers != null && triggers.size() > 0 && triggers.get(0) instanceof PausedTrigger) {
                                 logger.debug("Paused triggers for: " + logEntry.getColumnFamily());
                             } else {
                                 if (triggers != null) {
@@ -41,10 +39,9 @@ public class TriggerTask extends TimerTask {
                                             trigger.process(logEntry);
                                         } catch (Throwable t) {
                                             logEntry.setStatus(LogEntryStatus.ERROR);
-                                            logEntry.getErrors().put(
-                                                    trigger.getClass().getName(),
-                                                    ExceptionUtils.getMessage(t) + " : "
-                                                            + ExceptionUtils.getFullStackTrace(t));
+                                            logEntry.getErrors().put(                                                    
+                                                    // TODO : Make this a stack trace
+                                                    trigger.getClass().getName(), t.getMessage());
                                         }
                                     }
                                 }
