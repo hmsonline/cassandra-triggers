@@ -44,7 +44,7 @@ public class TriggerStore extends CassandraStore {
             Class<Trigger> clazz = (Class<Trigger>) Class.forName(triggerClass);
             return clazz.newInstance();
         } catch (Exception e) {
-            logger.error("Could not create trigger class, will NOT run.", e);
+            logger.error("Could not create trigger class [" + triggerClass + "], it will NOT run.", e);
         }
         return null;
     }

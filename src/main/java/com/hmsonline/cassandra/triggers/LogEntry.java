@@ -128,5 +128,8 @@ public class LogEntry {
     public void setErrors(Map<String, String> errors) {
       this.errors = errors;
     }
+    public boolean hasErrors(){
+        return (this.getErrors() != null && this.getErrors().size() > 0);
+    }
 
 }

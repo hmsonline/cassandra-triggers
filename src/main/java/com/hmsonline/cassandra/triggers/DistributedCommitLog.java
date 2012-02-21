@@ -26,7 +26,6 @@ import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.commons.collections.MapUtils;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,8 +52,7 @@ public class DistributedCommitLog extends CassandraStore {
         this.getHostName();
         triggerTimer = new Timer(true);
         triggerTimer.schedule(new TriggerTask(), 0, TRIGGER_FREQUENCY);
-        Log.debug("Started Trigger Task thread.");
-
+        logger.debug("Started Trigger Task thread.");
     }
 
     public static synchronized DistributedCommitLog getLog() throws Exception {
@@ -128,7 +126,7 @@ public class DistributedCommitLog extends CassandraStore {
         slice.add(getMutation("status", logEntry.getStatus().toString()));
         slice.add(getMutation("timestamp", Long.toString(logEntry.getTimestamp())));
         slice.add(getMutation("host", logEntry.getHost()));
-        if (MapUtils.isNotEmpty(logEntry.getErrors())) {
+        if (logEntry.hasErrors()) {
             for (String errorKey : logEntry.getErrors().keySet()) {
                 slice.add(getMutation(errorKey, logEntry.getErrors().get(errorKey)));
             }
