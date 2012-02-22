@@ -7,11 +7,15 @@ import java.util.Map;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
 import org.apache.cassandra.thrift.ColumnParent;
 import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.KeyRange;
 import org.apache.cassandra.thrift.KeySlice;
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
+import org.apache.cassandra.thrift.TimedOutException;
+import org.apache.cassandra.thrift.UnavailableException;
 import org.apache.cassandra.utils.ByteBufferUtil;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +26,8 @@ public class ConfigurationStore extends CassandraStore {
     private static ConfigurationStore instance = null;
     private long lastFetchTime = -1;
     private static final int REFRESH_INTERVAL = 1000 * 30; // 30 seconds
-    private Map<String, Map<String, String>> cache = null;
+    private Map<String, Map<String, String>> cache = new HashMap<String, Map<String, String>>();
+    boolean refreshEnabled = true;
 
     public ConfigurationStore(String keyspace, String columnFamily) throws Exception {
         super(keyspace, columnFamily);
@@ -35,7 +40,8 @@ public class ConfigurationStore extends CassandraStore {
         return instance;
     }
 
-    public boolean isCommitLogEnabled() throws Throwable {
+    public boolean isCommitLogEnabled() throws InvalidRequestException, UnavailableException, TimedOutException,
+            TException, Exception {
         Map<String, String> commitLogProperties = this.getConfiguration().get("CommitLog");
         if (commitLogProperties != null) {
             String enabled = commitLogProperties.get("enabled");
@@ -53,10 +59,11 @@ public class ConfigurationStore extends CassandraStore {
         return false;
     }
 
-    public Map<String, Map<String, String>> getConfiguration() throws Throwable {
+    public Map<String, Map<String, String>> getConfiguration() throws InvalidRequestException, UnavailableException,
+            TimedOutException, TException, Exception {
         long currentTime = System.currentTimeMillis();
         long timeSinceRefresh = currentTime - this.lastFetchTime;
-        if (timeSinceRefresh > REFRESH_INTERVAL) {
+        if (refreshEnabled && timeSinceRefresh > REFRESH_INTERVAL) {
             logger.debug("Refreshing trigger configuration.");
             SlicePredicate predicate = new SlicePredicate();
             SliceRange range = new SliceRange(ByteBufferUtil.bytes(""), ByteBufferUtil.bytes(""), false, 10);
@@ -79,10 +86,24 @@ public class ConfigurationStore extends CassandraStore {
                 }
                 configuration.put(component, properties);
             }
-            
+
             this.lastFetchTime = currentTime;
             cache = configuration;
         }
         return cache;
+    }
+
+    public void enableCommitLog() throws InvalidRequestException, UnavailableException, TimedOutException, TException,
+            Exception {
+        Map<String, String> commitLogProperties = this.getConfiguration().get("CommitLog");
+        if (commitLogProperties == null) {
+            commitLogProperties = new HashMap<String, String>();
+            this.getConfiguration().put("CommitLog", commitLogProperties);
+        }
+        commitLogProperties.put("enabled", "true");
+    }
+
+    public void disableRefresh() {
+        this.refreshEnabled = false;
     }
 }

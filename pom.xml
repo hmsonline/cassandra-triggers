@@ -73,6 +73,12 @@
 			<artifactId>hadoop-core</artifactId>
 			<version>0.20.205.0</version>
 		</dependency>
+		<dependency>
+			<groupId>me.prettyprint</groupId>
+			<artifactId>hector-core</artifactId>
+			<version>1.0-1</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
