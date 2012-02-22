@@ -1,5 +1,7 @@
 package com.hmsonline.cassandra.triggers;
 
+import static org.junit.Assert.assertEquals;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -21,6 +23,6 @@ public class DistributedCommitLogTest extends AbstractTriggerTest {
         DistributedCommitLog.getLog().writeLogEntry(logEntry);     
         
         List<LogEntry> logEntries = DistributedCommitLog.getLog().getPending();
-        assert(logEntries.size() == 1);
+        assertEquals(1, logEntries.size());
     }
 }
