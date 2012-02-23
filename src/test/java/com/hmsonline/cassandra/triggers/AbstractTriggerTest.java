@@ -28,8 +28,12 @@ public abstract class AbstractTriggerTest {
         if (!started) {
             CassandraDaemon cassandraService = new CassandraDaemon();
             cassandraService.activate();
-            loadDataSchema(DATA_KEYSPACE, Arrays.asList(DATA_CF1, DATA_CF2));
-            loadTriggerSchema();
+            try {
+                loadDataSchema(DATA_KEYSPACE, Arrays.asList(DATA_CF1, DATA_CF2));
+            } catch (Throwable t) {
+                logger.debug("Received error when bootstrapping data schema, most likely it exists already."
+                        + t.getMessage());
+            }
             started = true;
         }
     }
@@ -52,26 +56,4 @@ public abstract class AbstractTriggerTest {
         Schema.instance.load(schema, Schema.instance.getVersion());
         logger.debug("======================= LOADED DATA SCHEMA FOR TESTS ==========================");
     }
-
-    private void loadTriggerSchema() {
-        List<KSMetaData> schema = new ArrayList<KSMetaData>();
-        Class<? extends AbstractReplicationStrategy> strategyClass = SimpleStrategy.class;
-        Map<String, String> strategyOptions = KSMetaData.optsWithRF(1);
-
-        CFMetaData[] cfDefs = new CFMetaData[3];
-        cfDefs[0] = new CFMetaData(DistributedCommitLog.KEYSPACE, DistributedCommitLog.COLUMN_FAMILY,
-                ColumnFamilyType.Standard, UTF8Type.instance, null);
-        cfDefs[1] = new CFMetaData(TriggerStore.KEYSPACE, TriggerStore.COLUMN_FAMILY, ColumnFamilyType.Standard,
-                UTF8Type.instance, null);
-        cfDefs[2] = new CFMetaData(ConfigurationStore.KEYSPACE, ConfigurationStore.COLUMN_FAMILY,
-                ColumnFamilyType.Standard, UTF8Type.instance, null);
-
-        KSMetaData validKsMetadata = KSMetaData.testMetadata(DistributedCommitLog.KEYSPACE, strategyClass,
-                strategyOptions, cfDefs);
-        schema.add(validKsMetadata);
-
-        Schema.instance.load(schema, Schema.instance.getVersion());
-        logger.debug("======================= LOADED TRIGGER SCHEMA FOR TESTS ==========================");
-    }
-
 }
