@@ -42,7 +42,7 @@ public class DistributedCommitLog extends CassandraStore {
     public static final int MAX_NUMBER_COLUMNS = 1000;
     public static final int BATCH_SIZE = 50;
     
-    // This is the time in seconds before this host will process messages from other hosts. 
+    // This is the time in seconds before this host will process messages from other hosts.
     public static final int TIME_BEFORE_PROCESS_OTHER_HOST = 20;  
     public static final int IN_FUTURE = 1000 * 60;
     private static DistributedCommitLog instance = null;
