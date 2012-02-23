@@ -18,6 +18,9 @@ public class TriggerTask extends TimerTask {
                 logger.debug("Running triggers.");
                 triggerMap = TriggerStore.getStore().getTriggers();
                 List<LogEntry> logEntries = DistributedCommitLog.getLog().getPending();
+                if(logger.isDebugEnabled() && logEntries != null) {
+                  logger.debug("Running logEntries: " + logEntries.size());
+                }
                 for (LogEntry logEntry : logEntries) {
 
                     // Make sure its mine, or its old enough that I should pick
