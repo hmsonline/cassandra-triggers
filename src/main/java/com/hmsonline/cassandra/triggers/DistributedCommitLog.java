@@ -12,9 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 
-import me.prettyprint.cassandra.serializers.LongSerializer;
-import me.prettyprint.cassandra.serializers.StringSerializer;
-
 import org.apache.cassandra.db.ColumnFamily;
 import org.apache.cassandra.db.RowMutation;
 import org.apache.cassandra.thrift.Column;
@@ -41,9 +38,10 @@ public class DistributedCommitLog extends CassandraStore {
     public static final String COLUMN_FAMILY = "CommitLog";
     public static final int MAX_NUMBER_COLUMNS = 1000;
     public static final int BATCH_SIZE = 50;
-    
-    // This is the time in seconds before this host will process messages from other hosts. 
-    public static final int TIME_BEFORE_PROCESS_OTHER_HOST = 20;  
+
+    // This is the time in seconds before this host will process messages from
+    // other hosts.
+    public static final int TIME_BEFORE_PROCESS_OTHER_HOST = 20;
     public static final int IN_FUTURE = 1000 * 60;
     private static DistributedCommitLog instance = null;
 
@@ -55,7 +53,8 @@ public class DistributedCommitLog extends CassandraStore {
     private String hostName = null;
 
     public DistributedCommitLog(String keyspace, String columnFamily) throws Exception {
-        super(keyspace, columnFamily, new String [] {LogEntryColumns.status.toString(), LogEntryColumns.host.toString(), LogEntryColumns.timestamp.toString()});
+        super(keyspace, columnFamily, new String[] { LogEntryColumns.status.toString(),
+                LogEntryColumns.host.toString(), LogEntryColumns.timestamp.toString() });
         logger.warn("Instantiated distributed commit log.");
         this.getHostName();
         triggerTimer = new Timer(true);
@@ -95,35 +94,33 @@ public class DistributedCommitLog extends CassandraStore {
         keyRange.setStart_key(ByteBufferUtil.bytes(""));
         keyRange.setEnd_key(ByteBufferUtil.EMPTY_BYTE_BUFFER);
         ColumnParent parent = new ColumnParent(COLUMN_FAMILY);
-        
+
         IndexClause indexClause = new IndexClause();
         indexClause.setCount(BATCH_SIZE);
         indexClause.setStart_key(new byte[0]);
-        StringSerializer se = new StringSerializer();
-        indexClause.addToExpressions(new IndexExpression(se.toByteBuffer(LogEntryColumns.status.toString()), IndexOperator.EQ, 
-                                                         se.toByteBuffer(LogEntryStatus.COMMITTED.toString())));
-        
-        indexClause.addToExpressions(new IndexExpression(se.toByteBuffer(LogEntryColumns.host.toString()), IndexOperator.EQ, 
-                                                         se.toByteBuffer(this.getHostName())));
-        
+        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes(LogEntryColumns.status.toString()),
+                IndexOperator.EQ, ByteBufferUtil.bytes(LogEntryStatus.COMMITTED.toString())));
+
+        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes(LogEntryColumns.host.toString()),
+                IndexOperator.EQ, ByteBufferUtil.bytes(this.getHostName())));
+
         List<KeySlice> rows = getConnection(KEYSPACE).get_indexed_slices(parent, indexClause, predicate,
-                                                                       ConsistencyLevel.ALL);
-        
+                ConsistencyLevel.ALL);
+
         result.addAll(toLogEntry(rows));
-        
+
         indexClause = new IndexClause();
         indexClause.setCount(BATCH_SIZE);
         indexClause.setStart_key(new byte[0]);
-        LongSerializer le = new LongSerializer();
-        indexClause.addToExpressions(new IndexExpression(se.toByteBuffer(LogEntryColumns.status.toString()), IndexOperator.EQ, 
-                                                         se.toByteBuffer(LogEntryStatus.COMMITTED.toString())));
-        
-        indexClause.addToExpressions(new IndexExpression(se.toByteBuffer((LogEntryColumns.timestamp.toString())), IndexOperator.LT, 
-                                                         le.toByteBuffer(System.currentTimeMillis() - (1000L * TIME_BEFORE_PROCESS_OTHER_HOST))));
-        
-        rows = getConnection(KEYSPACE).get_indexed_slices(parent, indexClause, predicate,
-                                                                       ConsistencyLevel.ALL);
-        
+        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes(LogEntryColumns.status.toString()),
+                IndexOperator.EQ, ByteBufferUtil.bytes(LogEntryStatus.COMMITTED.toString())));
+
+        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes((LogEntryColumns.timestamp.toString())),
+                IndexOperator.LT,
+                ByteBufferUtil.bytes(System.currentTimeMillis() - (1000L * TIME_BEFORE_PROCESS_OTHER_HOST))));
+
+        rows = getConnection(KEYSPACE).get_indexed_slices(parent, indexClause, predicate, ConsistencyLevel.ALL);
+
         result.addAll(toLogEntry(rows));
         return result;
     }
@@ -227,49 +224,48 @@ public class DistributedCommitLog extends CassandraStore {
         long age = now - logEntry.getTimestamp();
         return (age > DistributedCommitLog.MAX_LOG_ENTRY_AGE);
     }
-    
+
     private static List<LogEntry> toLogEntry(List<KeySlice> rows) throws Exception, Throwable {
-      List<LogEntry> logEntries = new ArrayList<LogEntry>();
-      if(rows == null || rows.size() == 0) {
-        return logEntries; 
-      }
-      for (KeySlice keySlice : rows) {
-          if (keySlice.columns.size() > 0) {
-              LogEntry logEntry = new LogEntry();
-              logEntry.setUuid(ByteBufferUtil.string(keySlice.key));
-              for (ColumnOrSuperColumn cc : keySlice.columns) {
-                  if (ConfigurationStore.getStore().shouldWriteColumns()) {
-                      ColumnOperation operation = new ColumnOperation();
-                      operation.setName(cc.column.name);
-                      operation.setOperationType(cc.column.value);
-                  }
-                  else {
-                      switch (LogEntryColumns.valueOf(ByteBufferUtil.string(cc.column.name))) {
+        List<LogEntry> logEntries = new ArrayList<LogEntry>();
+        if (rows == null || rows.size() == 0) {
+            return logEntries;
+        }
+        for (KeySlice keySlice : rows) {
+            if (keySlice.columns.size() > 0) {
+                LogEntry logEntry = new LogEntry();
+                logEntry.setUuid(ByteBufferUtil.string(keySlice.key));
+                for (ColumnOrSuperColumn cc : keySlice.columns) {
+                    if (ConfigurationStore.getStore().shouldWriteColumns()) {
+                        ColumnOperation operation = new ColumnOperation();
+                        operation.setName(cc.column.name);
+                        operation.setOperationType(cc.column.value);
+                    } else {
+                        switch (LogEntryColumns.valueOf(ByteBufferUtil.string(cc.column.name))) {
                         case ks:
-                          logEntry.setKeyspace(ByteBufferUtil.string(cc.column.value));
-                          break;
+                            logEntry.setKeyspace(ByteBufferUtil.string(cc.column.value));
+                            break;
                         case cf:
-                          logEntry.setColumnFamily(ByteBufferUtil.string(cc.column.value));
-                          break;
+                            logEntry.setColumnFamily(ByteBufferUtil.string(cc.column.value));
+                            break;
                         case row:
-                          logEntry.setRowKey(cc.column.value);
-                          break;
+                            logEntry.setRowKey(cc.column.value);
+                            break;
                         case status:
-                          logEntry.setStatus(LogEntryStatus.valueOf(ByteBufferUtil.string(cc.column.value)));
-                          break;
+                            logEntry.setStatus(LogEntryStatus.valueOf(ByteBufferUtil.string(cc.column.value)));
+                            break;
                         case timestamp:
-                          logEntry.setTimestamp(Long.valueOf(ByteBufferUtil.string(cc.column.value)));
-                          break;
+                            logEntry.setTimestamp(Long.valueOf(ByteBufferUtil.string(cc.column.value)));
+                            break;
                         case host:
-                          logEntry.setHost(ByteBufferUtil.string(cc.column.value));
-                          break;
-                      }
+                            logEntry.setHost(ByteBufferUtil.string(cc.column.value));
+                            break;
+                        }
                     }
                 }
                 logEntries.add(logEntry);
-              }
-      }
-      return logEntries;
+            }
+        }
+        return logEntries;
     }
 
 }

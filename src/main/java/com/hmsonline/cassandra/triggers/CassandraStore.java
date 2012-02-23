@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 public class CassandraStore {
     private static Logger logger = LoggerFactory.getLogger(CassandraStore.class);
-    private static boolean initialized = false;
+    private boolean initialized = false;
     private String keyspace = null;
     private String columnFamily = null;
 

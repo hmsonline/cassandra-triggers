@@ -28,8 +28,13 @@ public abstract class AbstractTriggerTest {
         if (!started) {
             CassandraDaemon cassandraService = new CassandraDaemon();
             cassandraService.activate();
-            loadDataSchema(DATA_KEYSPACE, Arrays.asList(DATA_CF1, DATA_CF2));
-            loadTriggerSchema();
+            try {
+                loadDataSchema(DATA_KEYSPACE, Arrays.asList(DATA_CF1, DATA_CF2));
+            } catch (Throwable t) {
+                logger.debug("Received error when bootstrapping data schema, most likely it exists already."
+                        + t.getMessage());
+            }
+            // loadTriggerSchema();
             started = true;
         }
     }
@@ -59,11 +64,11 @@ public abstract class AbstractTriggerTest {
         Map<String, String> strategyOptions = KSMetaData.optsWithRF(1);
 
         CFMetaData[] cfDefs = new CFMetaData[3];
-        cfDefs[0] = new CFMetaData(DistributedCommitLog.KEYSPACE, DistributedCommitLog.COLUMN_FAMILY,
-                ColumnFamilyType.Standard, UTF8Type.instance, null);
-        cfDefs[1] = new CFMetaData(TriggerStore.KEYSPACE, TriggerStore.COLUMN_FAMILY, ColumnFamilyType.Standard,
+        cfDefs[0] = new CFMetaData(TriggerStore.KEYSPACE, TriggerStore.COLUMN_FAMILY, ColumnFamilyType.Standard,
                 UTF8Type.instance, null);
-        cfDefs[2] = new CFMetaData(ConfigurationStore.KEYSPACE, ConfigurationStore.COLUMN_FAMILY,
+        cfDefs[1] = new CFMetaData(ConfigurationStore.KEYSPACE, ConfigurationStore.COLUMN_FAMILY,
+                ColumnFamilyType.Standard, UTF8Type.instance, null);
+        cfDefs[2] = new CFMetaData(DistributedCommitLog.KEYSPACE, DistributedCommitLog.COLUMN_FAMILY,
                 ColumnFamilyType.Standard, UTF8Type.instance, null);
 
         KSMetaData validKsMetadata = KSMetaData.testMetadata(DistributedCommitLog.KEYSPACE, strategyClass,
