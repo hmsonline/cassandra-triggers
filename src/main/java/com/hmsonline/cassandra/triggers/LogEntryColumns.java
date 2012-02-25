@@ -4,5 +4,5 @@
 package com.hmsonline.cassandra.triggers;
 
 public enum LogEntryColumns {
-  ks, cf, row, status, timestamp, host;
+  KS, CF, ROW, STATUS, TIMESTAMP, HOST;
 }
