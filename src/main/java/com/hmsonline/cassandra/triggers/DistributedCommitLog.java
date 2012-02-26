@@ -53,8 +53,8 @@ public class DistributedCommitLog extends CassandraStore {
     private String hostName = null;
 
     public DistributedCommitLog(String keyspace, String columnFamily) throws Exception {
-        super(keyspace, columnFamily, new String[] { LogEntryColumns.status.toString(),
-                LogEntryColumns.host.toString(), LogEntryColumns.timestamp.toString() });
+        super(keyspace, columnFamily, new String[] { LogEntryColumns.STATUS.toString(),
+                LogEntryColumns.HOST.toString(), LogEntryColumns.TIMESTAMP.toString() });
         logger.warn("Instantiated distributed commit log.");
         this.getHostName();
         triggerTimer = new Timer(true);
@@ -98,10 +98,10 @@ public class DistributedCommitLog extends CassandraStore {
         IndexClause indexClause = new IndexClause();
         indexClause.setCount(BATCH_SIZE);
         indexClause.setStart_key(new byte[0]);
-        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes(LogEntryColumns.status.toString()),
+        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes(LogEntryColumns.STATUS.toString()),
                 IndexOperator.EQ, ByteBufferUtil.bytes(LogEntryStatus.COMMITTED.toString())));
 
-        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes(LogEntryColumns.host.toString()),
+        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes(LogEntryColumns.HOST.toString()),
                 IndexOperator.EQ, ByteBufferUtil.bytes(this.getHostName())));
 
         List<KeySlice> rows = getConnection(KEYSPACE).get_indexed_slices(parent, indexClause, predicate,
@@ -112,10 +112,10 @@ public class DistributedCommitLog extends CassandraStore {
         indexClause = new IndexClause();
         indexClause.setCount(BATCH_SIZE);
         indexClause.setStart_key(new byte[0]);
-        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes(LogEntryColumns.status.toString()),
+        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes(LogEntryColumns.STATUS.toString()),
                 IndexOperator.EQ, ByteBufferUtil.bytes(LogEntryStatus.COMMITTED.toString())));
 
-        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes((LogEntryColumns.timestamp.toString())),
+        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes((LogEntryColumns.TIMESTAMP.toString())),
                 IndexOperator.LT,
                 ByteBufferUtil.bytes(System.currentTimeMillis() - (1000L * TIME_BEFORE_PROCESS_OTHER_HOST))));
 
@@ -127,12 +127,12 @@ public class DistributedCommitLog extends CassandraStore {
 
     public void writeLogEntry(LogEntry logEntry) throws Throwable {
         List<Mutation> slice = new ArrayList<Mutation>();
-        slice.add(getMutation(LogEntryColumns.ks.toString(), logEntry.getKeyspace()));
-        slice.add(getMutation(LogEntryColumns.cf.toString(), logEntry.getColumnFamily()));
-        slice.add(getMutation(LogEntryColumns.row.toString(), logEntry.getRowKey()));
-        slice.add(getMutation(LogEntryColumns.status.toString(), logEntry.getStatus().toString()));
-        slice.add(getMutation(LogEntryColumns.timestamp.toString(), Long.toString(logEntry.getTimestamp())));
-        slice.add(getMutation(LogEntryColumns.host.toString(), logEntry.getHost()));
+        slice.add(getMutation(LogEntryColumns.KS.toString(), logEntry.getKeyspace()));
+        slice.add(getMutation(LogEntryColumns.CF.toString(), logEntry.getColumnFamily()));
+        slice.add(getMutation(LogEntryColumns.ROW.toString(), logEntry.getRowKey()));
+        slice.add(getMutation(LogEntryColumns.STATUS.toString(), logEntry.getStatus().toString()));
+        slice.add(getMutation(LogEntryColumns.TIMESTAMP.toString(), Long.toString(logEntry.getTimestamp())));
+        slice.add(getMutation(LogEntryColumns.HOST.toString(), logEntry.getHost()));
         if (logEntry.hasErrors()) {
             for (String errorKey : logEntry.getErrors().keySet()) {
                 slice.add(getMutation(errorKey, logEntry.getErrors().get(errorKey)));
@@ -241,22 +241,22 @@ public class DistributedCommitLog extends CassandraStore {
                         operation.setOperationType(cc.column.value);
                     } else {
                         switch (LogEntryColumns.valueOf(ByteBufferUtil.string(cc.column.name))) {
-                        case ks:
+                        case KS:
                             logEntry.setKeyspace(ByteBufferUtil.string(cc.column.value));
                             break;
-                        case cf:
+                        case CF:
                             logEntry.setColumnFamily(ByteBufferUtil.string(cc.column.value));
                             break;
-                        case row:
+                        case ROW:
                             logEntry.setRowKey(cc.column.value);
                             break;
-                        case status:
+                        case STATUS:
                             logEntry.setStatus(LogEntryStatus.valueOf(ByteBufferUtil.string(cc.column.value)));
                             break;
-                        case timestamp:
+                        case TIMESTAMP:
                             logEntry.setTimestamp(Long.valueOf(ByteBufferUtil.string(cc.column.value)));
                             break;
-                        case host:
+                        case HOST:
                             logEntry.setHost(ByteBufferUtil.string(cc.column.value));
                             break;
                         }
