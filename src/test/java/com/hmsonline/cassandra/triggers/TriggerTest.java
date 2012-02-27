@@ -1,6 +1,15 @@
 package com.hmsonline.cassandra.triggers;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import me.prettyprint.hector.api.Cluster;
+import me.prettyprint.hector.api.factory.HFactory;
 
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.Column;
@@ -16,12 +25,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TriggerTest extends AbstractTriggerTest {
-
+    private final static String CLUSTER_NAME = "TEST_CLUSTER";
+    private final static String ROW_KEY = "TEST_ROW_KEY";
+    
     public static final ByteBuffer COLUMN = ByteBufferUtil.bytes("2012-01-01_12:12:12");
     public static final ByteBuffer VALUE = ByteBufferUtil.bytes("{\"observation\":\"8\"}");
 
     private static Logger logger = LoggerFactory.getLogger(TriggerTest.class);
 
+    
+    @org.junit.Test
+    public void testLogWrite() throws Throwable {
+        TriggerStore.getStore().insertTrigger(DATA_KEYSPACE, DATA_CF1, 
+                "com.hmsonline.cassandra.triggers.TestTrigger");
+        
+        Cluster cluster = HFactory.getOrCreateCluster(CLUSTER_NAME, "localhost:9160");
+        Map<String, String> columns = new HashMap<String,String>();
+        columns.put("col1", "val1");
+        this.persist(cluster, DATA_KEYSPACE, DATA_CF1, ROW_KEY, columns);
+        List<LogEntry> logEntries = DistributedCommitLog.getLog().getPending();
+        assertTrue(logEntries.size() >= 1);
+        Thread.currentThread();
+        Thread.sleep(5000);
+        logEntries = DistributedCommitLog.getLog().getPending();
+        assertEquals(0, logEntries.size());
+    }
+    
     @org.junit.Test
     public void testThrowingExceptionWhenInsertingColumn() throws Throwable {
         TTransport tr = new TFramedTransport(new TSocket("localhost", 9160));

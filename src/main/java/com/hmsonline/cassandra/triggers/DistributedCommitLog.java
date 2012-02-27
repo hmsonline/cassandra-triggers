@@ -14,7 +14,6 @@ import java.util.Timer;
 
 import org.apache.cassandra.db.ColumnFamily;
 import org.apache.cassandra.db.RowMutation;
-import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
 import org.apache.cassandra.thrift.ColumnParent;
 import org.apache.cassandra.thrift.ColumnPath;
@@ -167,32 +166,6 @@ public class DistributedCommitLog extends CassandraStore {
     public void errorLogEntry(LogEntry logEntry) throws Throwable {
         logEntry.setConsistencyLevel(ConsistencyLevel.ALL);
         DistributedCommitLog.getLog().writeLogEntry(logEntry);
-    }
-
-    // Utility Methods
-    private Mutation getMutation(String name, String value) {
-        return getMutation(name, ByteBufferUtil.bytes(value));
-    }
-
-    private Mutation getMutation(String name, ByteBuffer value) {
-        return getMutation(ByteBufferUtil.bytes(name), value);
-    }
-
-    private Mutation getMutation(ByteBuffer name, OperationType value) {
-        return getMutation(name, ByteBufferUtil.bytes(value.toString()));
-    }
-
-    private Mutation getMutation(ByteBuffer name, ByteBuffer value) {
-        Column c = new Column();
-        c.setName(name);
-        c.setValue(value);
-        c.setTimestamp(System.currentTimeMillis() * 1000);
-
-        Mutation m = new Mutation();
-        ColumnOrSuperColumn cc = new ColumnOrSuperColumn();
-        cc.setColumn(c);
-        m.setColumn_or_supercolumn(cc);
-        return m;
     }
 
     public String getHostName() throws SocketException {
