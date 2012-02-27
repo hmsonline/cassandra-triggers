@@ -6,7 +6,7 @@
 	<url>https://github.com/hmsonline/cassandra-triggers</url>
 	<groupId>com.hmsonline</groupId>
 	<artifactId>hms-cassandra-triggers</artifactId>
-	<version>0.14.4-SNAPSHOT</version>
+	<version>0.14.5-SNAPSHOT</version>
 
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
@@ -113,6 +113,14 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>2.8.1</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.9</version>
+				<configuration>
+					<argLine>-javaagent:lib/aspectjweaver.jar</argLine>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
