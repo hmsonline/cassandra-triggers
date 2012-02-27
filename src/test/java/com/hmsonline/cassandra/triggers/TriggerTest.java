@@ -49,6 +49,7 @@ public class TriggerTest extends AbstractTriggerTest {
         Thread.sleep(5000);
         logEntries = DistributedCommitLog.getLog().getPending();
         assertEquals(0, logEntries.size());
+        assertTrue(TestTrigger.wasCalled());
     }
     
     @org.junit.Test
