@@ -1,5 +1,6 @@
 package com.hmsonline.cassandra.triggers;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,12 +10,17 @@ import java.util.Map;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
 import org.apache.cassandra.thrift.ColumnParent;
 import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.KeyRange;
 import org.apache.cassandra.thrift.KeySlice;
+import org.apache.cassandra.thrift.Mutation;
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
+import org.apache.cassandra.thrift.TimedOutException;
+import org.apache.cassandra.thrift.UnavailableException;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.commons.lang.StringUtils;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +73,18 @@ public class TriggerStore extends CassandraStore {
             triggerMap.put(columnFamily, processRow(slice));
         }
         return triggerMap;
+    }
+    
+    public void insertTrigger(String keyspace, String columnFamily, String triggerName) throws InvalidRequestException, UnavailableException, TimedOutException, TException, Exception {
+        List<Mutation> slice = new ArrayList<Mutation>();
+        slice.add(getMutation(triggerName, ENABLED));
+        Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
+        Map<String, List<Mutation>> cfMutations = new HashMap<String, List<Mutation>>();
+        cfMutations.put(COLUMN_FAMILY, slice);
+
+        ByteBuffer rowKey = ByteBufferUtil.bytes(keyspace + ":" + columnFamily);
+        mutationMap.put(rowKey, cfMutations);
+        getConnection(KEYSPACE).batch_mutate(mutationMap, ConsistencyLevel.ALL);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

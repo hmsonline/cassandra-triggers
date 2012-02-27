@@ -5,6 +5,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.hector.api.Cluster;
+import me.prettyprint.hector.api.Keyspace;
+import me.prettyprint.hector.api.factory.HFactory;
+import me.prettyprint.hector.api.mutation.Mutator;
+
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.config.KSMetaData;
 import org.apache.cassandra.config.Schema;
@@ -56,4 +62,20 @@ public abstract class AbstractTriggerTest {
         Schema.instance.load(schema, Schema.instance.getVersion());
         logger.debug("======================= LOADED DATA SCHEMA FOR TESTS ==========================");
     }
+
+    public void persist(Cluster cluster, String keyspace, String columnFamily, String rowKey,
+            Map<String, String> columns) throws Exception {
+        ConfigurationStore.getStore().disableRefresh();
+        ConfigurationStore.getStore().enableCommitLog();
+
+        StringSerializer serializer = StringSerializer.get();
+        Keyspace hectorKeyspace = HFactory.createKeyspace(keyspace, cluster);
+        Mutator<String> mutator = HFactory.createMutator(hectorKeyspace, serializer);
+
+        for (String columnName : columns.keySet()) {
+            mutator.addInsertion(rowKey, columnFamily, HFactory.createStringColumn(columnName, columns.get(columnName)));
+        }
+        mutator.execute();
+    }
+
 }
