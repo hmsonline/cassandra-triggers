@@ -53,7 +53,7 @@ public class DistributedCommitLog extends CassandraStore {
 
     public DistributedCommitLog(String keyspace, String columnFamily) throws Exception {
         super(keyspace, columnFamily, new String[] { LogEntryColumns.STATUS.toString(),
-                LogEntryColumns.HOST.toString(), LogEntryColumns.TIMESTAMP.toString() });
+                LogEntryColumns.HOST.toString()});
         logger.warn("Instantiated distributed commit log.");
         this.getHostName();
         triggerTimer = new Timer(true);
