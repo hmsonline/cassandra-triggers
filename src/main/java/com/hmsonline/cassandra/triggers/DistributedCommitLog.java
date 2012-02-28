@@ -53,7 +53,7 @@ public class DistributedCommitLog extends CassandraStore {
 
     public DistributedCommitLog(String keyspace, String columnFamily) throws Exception {
         super(keyspace, columnFamily, new String[] { LogEntryColumns.STATUS.toString(),
-                LogEntryColumns.HOST.toString(), LogEntryColumns.TIMESTAMP.toString() });
+                LogEntryColumns.HOST.toString()});
         logger.warn("Instantiated distributed commit log.");
         this.getHostName();
         triggerTimer = new Timer(true);
@@ -105,20 +105,6 @@ public class DistributedCommitLog extends CassandraStore {
 
         List<KeySlice> rows = getConnection(KEYSPACE).get_indexed_slices(parent, indexClause, predicate,
                 ConsistencyLevel.ALL);
-
-        result.addAll(toLogEntry(rows));
-
-        indexClause = new IndexClause();
-        indexClause.setCount(BATCH_SIZE);
-        indexClause.setStart_key(new byte[0]);
-        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes(LogEntryColumns.STATUS.toString()),
-                IndexOperator.EQ, ByteBufferUtil.bytes(LogEntryStatus.COMMITTED.toString())));
-
-        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes((LogEntryColumns.TIMESTAMP.toString())),
-                IndexOperator.LT,
-                ByteBufferUtil.bytes(System.currentTimeMillis() - (1000L * TIME_BEFORE_PROCESS_OTHER_HOST))));
-
-        rows = getConnection(KEYSPACE).get_indexed_slices(parent, indexClause, predicate, ConsistencyLevel.ALL);
 
         result.addAll(toLogEntry(rows));
         return result;
