@@ -107,20 +107,6 @@ public class DistributedCommitLog extends CassandraStore {
                 ConsistencyLevel.ALL);
 
         result.addAll(toLogEntry(rows));
-
-        indexClause = new IndexClause();
-        indexClause.setCount(BATCH_SIZE);
-        indexClause.setStart_key(new byte[0]);
-        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes(LogEntryColumns.STATUS.toString()),
-                IndexOperator.EQ, ByteBufferUtil.bytes(LogEntryStatus.COMMITTED.toString())));
-
-        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes((LogEntryColumns.TIMESTAMP.toString())),
-                IndexOperator.LT,
-                ByteBufferUtil.bytes(System.currentTimeMillis() - (1000L * TIME_BEFORE_PROCESS_OTHER_HOST))));
-
-        rows = getConnection(KEYSPACE).get_indexed_slices(parent, indexClause, predicate, ConsistencyLevel.ALL);
-
-        result.addAll(toLogEntry(rows));
         return result;
     }
 
