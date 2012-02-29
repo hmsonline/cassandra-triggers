@@ -43,9 +43,7 @@ public class DistributedCommitLog extends CassandraStore {
 
     public static final int IN_FUTURE = 1000 * 60;
     private static DistributedCommitLog instance = null;
-
-    private static Timer triggerTimer = null;
-    private static final long TRIGGER_FREQUENCY = 1000; // every X milliseconds
+    private Thread triggerThread = null;
     private static final long MAX_LOG_ENTRY_AGE = 5000; // age of entry, at
                                                         // which time any node
                                                         // can process it.
@@ -56,8 +54,8 @@ public class DistributedCommitLog extends CassandraStore {
                 LogEntryColumns.HOST.toString(), LogEntryColumns.TIMESTAMP.toString() });
         logger.warn("Instantiated distributed commit log.");
         this.getHostName();
-        triggerTimer = new Timer(true);
-        triggerTimer.schedule(new TriggerTask(), 0, TRIGGER_FREQUENCY);
+        triggerThread = new Thread(new TriggerTask());
+        triggerThread.start();
         logger.debug("Started Trigger Task thread.");
     }
 

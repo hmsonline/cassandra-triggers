@@ -32,6 +32,10 @@ public class TriggerStore extends CassandraStore {
     public static final String ENABLED = "enabled";
     public static final String PAUSED = "PAUSED";
     private static TriggerStore instance = null;
+    private long lastFetchTime = -1;
+    private static final int REFRESH_INTERVAL = 1000 * 30; // 30 seconds
+    Map<String, List<Trigger>> triggerMap = null;
+
 
     public TriggerStore(String keyspace, String columnFamily) throws Exception {
         super(keyspace, columnFamily);
@@ -56,26 +60,30 @@ public class TriggerStore extends CassandraStore {
     }
 
     public Map<String, List<Trigger>> getTriggers() throws Exception {
-        // TODO: Cache this.
-        Map<String, List<Trigger>> triggerMap = new HashMap<String, List<Trigger>>();
-        SlicePredicate predicate = new SlicePredicate();
-        SliceRange range = new SliceRange(ByteBufferUtil.bytes(""), ByteBufferUtil.bytes(""), false, 10);
-        predicate.setSlice_range(range);
+        long currentTime = System.currentTimeMillis();
+        long timeSinceRefresh = currentTime - this.lastFetchTime;
+        if (timeSinceRefresh > REFRESH_INTERVAL) {
+            this.triggerMap = new HashMap<String, List<Trigger>>();
+            SlicePredicate predicate = new SlicePredicate();
+            SliceRange range = new SliceRange(ByteBufferUtil.bytes(""), ByteBufferUtil.bytes(""), false, 10);
+            predicate.setSlice_range(range);
 
-        KeyRange keyRange = new KeyRange(1000);
-        keyRange.setStart_key(ByteBufferUtil.bytes(""));
-        keyRange.setEnd_key(ByteBufferUtil.EMPTY_BYTE_BUFFER);
-        ColumnParent parent = new ColumnParent(COLUMN_FAMILY);
-        List<KeySlice> rows = getConnection(KEYSPACE).get_range_slices(parent, predicate, keyRange,
-                ConsistencyLevel.ALL);
-        for (KeySlice slice : rows) {
-            String columnFamily = ByteBufferUtil.string(slice.key);
-            triggerMap.put(columnFamily, processRow(slice));
+            KeyRange keyRange = new KeyRange(1000);
+            keyRange.setStart_key(ByteBufferUtil.bytes(""));
+            keyRange.setEnd_key(ByteBufferUtil.EMPTY_BYTE_BUFFER);
+            ColumnParent parent = new ColumnParent(COLUMN_FAMILY);
+            List<KeySlice> rows = getConnection(KEYSPACE).get_range_slices(parent, predicate, keyRange,
+                    ConsistencyLevel.ALL);
+            for (KeySlice slice : rows) {
+                String columnFamily = ByteBufferUtil.string(slice.key);
+                triggerMap.put(columnFamily, processRow(slice));
+            }
         }
         return triggerMap;
     }
-    
-    public void insertTrigger(String keyspace, String columnFamily, String triggerName) throws InvalidRequestException, UnavailableException, TimedOutException, TException, Exception {
+
+    public void insertTrigger(String keyspace, String columnFamily, String triggerName) throws InvalidRequestException,
+            UnavailableException, TimedOutException, TException, Exception {
         List<Mutation> slice = new ArrayList<Mutation>();
         slice.add(getMutation(triggerName, ENABLED));
         Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();

@@ -1,69 +1,53 @@
 package com.hmsonline.cassandra.triggers;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.TimerTask;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TriggerTask extends TimerTask {
+public class TriggerTask implements Runnable {
+    private static int THREAD_POOL_SIZE = 20;
+    private static int MAX_QUEUE_SIZE = 500;
+    private List<Thread> threadPool = new ArrayList<Thread>();
+    private BlockingQueue<LogEntry> workQueue = null;
     private static Logger logger = LoggerFactory.getLogger(TriggerTask.class);
 
-    @Override
+    public TriggerTask() {
+        workQueue = new ArrayBlockingQueue<LogEntry>(MAX_QUEUE_SIZE);
+        // Spinning up new thread pool
+        logger.debug("Spawning [" + THREAD_POOL_SIZE + "] threads for commit log processing.");
+        for (int i = 0; i < THREAD_POOL_SIZE; i++) {
+            TriggerExecutionThread runnable = new TriggerExecutionThread(workQueue);
+            Thread thread = new Thread(runnable);
+            threadPool.add(thread);
+            thread.start();
+        }
+    }
+
     public void run() {
-        try {
-            if (ConfigurationStore.getStore().isCommitLogEnabled()) {
-                Map<String, List<Trigger>> triggerMap = null;
-                logger.debug("Running triggers.");
-                triggerMap = TriggerStore.getStore().getTriggers();
-                List<LogEntry> logEntries = DistributedCommitLog.getLog().getPending();
-                if(logger.isDebugEnabled() && logEntries != null) {
-                  logger.debug("Running logEntries: " + logEntries.size());
-                }
-                for (LogEntry logEntry : logEntries) {
+        while (true) {
 
-                    // Make sure its mine, or its old enough that I should pick
-                    // it up to ensure processing by someone
-                    if (DistributedCommitLog.getLog().isMine(logEntry) || DistributedCommitLog.getLog().isOld(logEntry)) {
-
-                        // Make sure it hadn't error'd previously
-                        if (!LogEntryStatus.ERROR.equals(logEntry.getStatus())) {
-                            logger.debug("Processing Entry [" + logEntry.getUuid() + "]:[" + logEntry.getKeyspace()
-                                    + "]:[" + logEntry.getColumnFamily() + "]");
-                            String path = logEntry.getKeyspace() + ":" + logEntry.getColumnFamily();
-                            List<Trigger> triggers = triggerMap.get(path);
-                            if (triggers != null && triggers.size() > 0 && triggers.get(0) instanceof PausedTrigger) {
-                                logger.debug("Paused triggers for: " + logEntry.getColumnFamily());
-                            } else {
-                                if (triggers != null) {
-                                    for (Trigger trigger : triggers) {
-                                        try {
-                                            trigger.process(logEntry);
-                                        } catch (Throwable t) {
-                                            logEntry.setStatus(LogEntryStatus.ERROR);
-                                            logEntry.getErrors().put(                                                    
-                                                    // TODO : Make this a stack trace
-                                                    trigger.getClass().getName(), t.getMessage());
-                                        }
-                                    }
-                                }
-                                if (LogEntryStatus.ERROR.equals(logEntry.getStatus())) {
-                                    DistributedCommitLog.getLog().errorLogEntry(logEntry);
-                                } else {
-                                    // Provided all processed properly, remove
-                                    // the logEntry
-                                    DistributedCommitLog.getLog().removeLogEntry(logEntry);
-                                }
-                            }
-                        }
+            try {
+                if (ConfigurationStore.getStore().isCommitLogEnabled()) {
+                    logger.debug("Running triggers.");
+                    List<LogEntry> logEntries = DistributedCommitLog.getLog().getPending();
+                    if (logger.isDebugEnabled() && logEntries != null) {
+                        logger.debug("Processing [" + logEntries.size() + "] logEntries.");
                     }
+                    for (LogEntry logEntry : logEntries) {
+                        workQueue.add(logEntry);
+                    }
+                } else {
+                    logger.debug("Skipping trigger execution because commit log is disabled.");
                 }
-            } else {
-                logger.debug("Skipping trigger execution because commit log is disabled.");
+                Thread.sleep(100);
+                
+            } catch (Throwable t) {
+                logger.error("Could not execute triggers.", t);
             }
-        } catch (Throwable t) {
-            logger.error("Could not execute triggers.", t);
         }
     }
 }
