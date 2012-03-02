@@ -1,5 +1,8 @@
 package com.hmsonline.cassandra.triggers;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
@@ -42,9 +45,8 @@ public class TriggerTask extends TimerTask {
                                             trigger.process(logEntry);
                                         } catch (Throwable t) {
                                             logEntry.setStatus(LogEntryStatus.ERROR);
-                                            logEntry.getErrors().put(                                                    
-                                                    // TODO : Make this a stack trace
-                                                    trigger.getClass().getName(), t.getMessage());
+                                            logEntry.getErrors().put(
+                                                    trigger.getClass().getName(), stackToString(t));
                                         }
                                     }
                                 }
@@ -64,6 +66,18 @@ public class TriggerTask extends TimerTask {
             }
         } catch (Throwable t) {
             logger.error("Could not execute triggers.", t);
+        }
+    }
+    
+    protected static String stackToString(Throwable t) {
+        Writer writer = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(writer);
+        t.printStackTrace(printWriter);
+        if(t.getMessage() == null) {
+            return writer.toString();
+        }
+        else {
+            return t.getMessage() + "\n " + writer.toString();
         }
     }
 }
