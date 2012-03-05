@@ -29,7 +29,7 @@ public class TriggerExecutionThread implements Runnable {
                 }
             }
         } catch (InterruptedException intEx) {
-            logger.debug("Closing the door on the way out.");
+            logger.debug("Trigger thread interrupted. Closing the door on the way out.");
         }
     }
 
