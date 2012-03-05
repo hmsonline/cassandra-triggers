@@ -1,5 +1,8 @@
 package com.hmsonline.cassandra.triggers;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
@@ -51,8 +54,7 @@ public class TriggerExecutionThread implements Runnable {
                             } catch (Throwable t) {
                                 logEntry.setStatus(LogEntryStatus.ERROR);
                                 logEntry.getErrors().put(
-                                // TODO : Make this a stack trace
-                                        trigger.getClass().getName(), t.getMessage());
+                                        trigger.getClass().getName(), stackToString(t));
                             }
                         }
                     }
@@ -65,6 +67,17 @@ public class TriggerExecutionThread implements Runnable {
                     }
                 }
             }
+        }
+    }
+
+    protected static String stackToString(Throwable t) {
+        Writer writer = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(writer);
+        t.printStackTrace(printWriter);
+        if (t.getMessage() == null) {
+            return writer.toString();
+        } else {
+            return t.getMessage() + "\n " + writer.toString();
         }
     }
 }

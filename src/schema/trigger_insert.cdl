@@ -1,0 +1,5 @@
+use Triggers;
+
+set Triggers['dummy:book']['com.hmsonline.cassandra.triggers.DisabledTrigger']='disabled';
+
+set Triggers['dummy:book']['com.hmsonline.cassandra.triggers.TestTrigger']='enabled';

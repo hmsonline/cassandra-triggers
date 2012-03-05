@@ -29,7 +29,6 @@ public class TriggerTask implements Runnable {
 
     public void run() {
         while (true) {
-
             try {
                 if (ConfigurationStore.getStore().isCommitLogEnabled()) {
                     logger.debug("Running triggers.");
@@ -50,4 +49,6 @@ public class TriggerTask implements Runnable {
             }
         }
     }
+    
+
 }
