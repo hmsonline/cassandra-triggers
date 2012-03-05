@@ -37,7 +37,7 @@ public class TriggerTask implements Runnable {
                         logger.debug("Processing [" + logEntries.size() + "] logEntries.");
                     }
                     for (LogEntry logEntry : logEntries) {
-                        workQueue.add(logEntry);
+                        workQueue.put(logEntry);
                     }
                 } else {
                     logger.debug("Skipping trigger execution because commit log is disabled.");
