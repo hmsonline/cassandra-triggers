@@ -33,7 +33,7 @@ public class TriggerExecutionThread implements Runnable {
         }
     }
 
-    public void processLogEntry(LogEntry logEntry) throws Exception, Throwable {
+    protected void processLogEntry(LogEntry logEntry) throws Exception, Throwable {
         // Make sure its mine, or its old enough that I should pick
         // it up to ensure processing by someone
         if (DistributedCommitLog.getLog().isMine(logEntry) || DistributedCommitLog.getLog().isOld(logEntry)) {
