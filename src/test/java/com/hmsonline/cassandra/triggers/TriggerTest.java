@@ -44,6 +44,7 @@ public class TriggerTest extends AbstractTriggerTest {
         columns.put("col1", "val1");
         this.persist(cluster, DATA_KEYSPACE, DATA_CF1, ROW_KEY, columns);
         List<LogEntry> logEntries = DistributedCommitLog.getLog().getPending();
+        Thread.sleep(100);
         assertTrue(logEntries.size() >= 1);
         Thread.currentThread();
         Thread.sleep(5000);

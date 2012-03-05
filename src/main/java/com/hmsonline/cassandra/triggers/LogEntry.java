@@ -132,4 +132,11 @@ public class LogEntry {
         return (this.getErrors() != null && this.getErrors().size() > 0);
     }
 
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof LogEntry)) {
+        return false;
+      }
+      return this.getUuid().equals(((LogEntry) obj).getUuid());
+    }
 }
