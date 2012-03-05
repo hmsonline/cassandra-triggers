@@ -59,10 +59,11 @@ public class TriggerStore extends CassandraStore {
         return null;
     }
 
-    public Map<String, List<Trigger>> getTriggers() throws Exception {
+    public synchronized Map<String, List<Trigger>> getTriggers() throws Exception {
         long currentTime = System.currentTimeMillis();
         long timeSinceRefresh = currentTime - this.lastFetchTime;
         if (timeSinceRefresh > REFRESH_INTERVAL) {
+            this.lastFetchTime = currentTime;
             this.triggerMap = new HashMap<String, List<Trigger>>();
             SlicePredicate predicate = new SlicePredicate();
             SliceRange range = new SliceRange(ByteBufferUtil.bytes(""), ByteBufferUtil.bytes(""), false, 10);

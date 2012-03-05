@@ -131,5 +131,4 @@ public class LogEntry {
     public boolean hasErrors(){
         return (this.getErrors() != null && this.getErrors().size() > 0);
     }
-
 }
