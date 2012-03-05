@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TriggerTask implements Runnable {
-    private static int THREAD_POOL_SIZE = 5;
+    private static int THREAD_POOL_SIZE = 20;
     private static int MAX_QUEUE_SIZE = 500;
     private List<Thread> threadPool = new ArrayList<Thread>();
     private BlockingQueue<LogEntry> workQueue = null;
