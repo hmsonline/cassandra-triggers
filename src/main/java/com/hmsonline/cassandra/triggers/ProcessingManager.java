@@ -10,7 +10,7 @@ public class ProcessingManager {
   private static long TIME_TO_LIVE = 5000;
   private ConcurrentHashMap<String, Long> processing;
 
-  public boolean check(String key) {
+  public boolean isAlreadyBeingProcessed(String key) {
     Long histTime = getProcessing().get(key);
     long currTime = System.currentTimeMillis();
     if(histTime == null) {
