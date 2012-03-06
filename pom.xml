@@ -5,13 +5,36 @@
 	<name> HMS : Cassandra : MapReduce </name>
 	<url>http://maven.apache.org</url>
         <groupId>com.hmsonline</groupId>
-        <version>0.14.9-SNAPSHOT</version>
+        <version>0.14.9</version>
 
         <parent>
                 <groupId>org.sonatype.oss</groupId>
                 <artifactId>oss-parent</artifactId>
                 <version>7</version>
         </parent>
+
+        <licenses>
+                <license>
+                        <name>The Apache Software License, Version 2.0</name>
+                        <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+                        <distribution>repo</distribution>
+                </license>
+        </licenses>
+
+        <scm>
+                <connection>scm:git:git@github.com:hmsonline/cassandra-triggers.git</connection>
+                <developerConnection>scm:git:git@github.com:hmsonline/cassandra-triggers.git</developerConnection>
+                <url>git@github.com:hmsonline/cassandra-triggers.git</url>
+        </scm>
+
+        <developers>
+                <developer>
+                        <id>boneill42</id>
+                        <name>Brian O'Neill</name>
+                        <email>bone@alumni.brown.edu</email>
+                </developer>
+        </developers>
+
 
 	<dependencies>
 		<dependency>
@@ -86,10 +109,4 @@
       </plugin>
 		</plugins>
 	</build>
-
-  <scm>
-    <connection>scm:svn:http://svn.sonatype.org/spice/tags/hms-cassandra-mapreduce-0.14.9</connection>
-    <developerConnection>scm:svn:https://svn.sonatype.org/spice/tags/hms-cassandra-mapreduce-0.14.9</developerConnection>
-    <url>http://svn.sonatype.org/spice/tags/hms-cassandra-mapreduce-0.14.9</url>
-  </scm>
 </project>
