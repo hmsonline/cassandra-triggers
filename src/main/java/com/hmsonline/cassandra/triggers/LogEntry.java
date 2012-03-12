@@ -1,17 +1,24 @@
 package com.hmsonline.cassandra.triggers;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.sf.json.JSONObject;
+import net.sf.json.JSONSerializer;
+
 import org.apache.cassandra.db.ColumnFamily;
 import org.apache.cassandra.db.IColumn;
 import org.apache.cassandra.thrift.ConsistencyLevel;
+import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.UUIDGen;
 
 public class LogEntry {
+  
+    private String commitLogRowKey = null;
     private String keyspace = null;
     private String columnFamily = null;
     private ConsistencyLevel consistencyLevel = null;
@@ -130,5 +137,48 @@ public class LogEntry {
     }
     public boolean hasErrors(){
         return (this.getErrors() != null && this.getErrors().size() > 0);
+    }
+    
+    public Map<String, String> toMap() throws CharacterCodingException {
+      HashMap<String, String> result = new HashMap<String, String>();
+      result.put(LogEntryColumns.ROW.toString(), ByteBufferUtil.string(this.rowKey));
+      result.put(LogEntryColumns.HOST.toString(), this.host);
+      result.put(LogEntryColumns.KS.toString(), this.keyspace);
+      result.put(LogEntryColumns.CF.toString(), this.columnFamily);
+      result.put(LogEntryColumns.STATUS.toString(), "" + this.status);
+      result.put(LogEntryColumns.TIMESTAMP.toString(), "" + this.timestamp);
+      if(this.errors != null) {
+        result.putAll(this.errors);
+      }
+      return result;
+    }
+    
+    public static LogEntry fromJson(String json) throws CharacterCodingException {
+      if(json == null || "".equals(json.trim())) {
+        return null;
+      }
+      LogEntry result = new LogEntry();
+      JSONObject jsonObj = (JSONObject) JSONSerializer.toJSON(json);
+      result.setRowKey(ByteBufferUtil.bytes(jsonObj.getString(LogEntryColumns.ROW.toString())));
+      result.setKeyspace(jsonObj.getString(LogEntryColumns.KS.toString()));
+      result.setColumnFamily(jsonObj.getString(LogEntryColumns.CF.toString()));
+      result.setHost(jsonObj.getString(LogEntryColumns.HOST.toString()));
+      result.setStatus(LogEntryStatus.valueOf((jsonObj.getString(LogEntryColumns.STATUS.toString()))));
+      result.setTimestamp(Long.parseLong((jsonObj.getString(LogEntryColumns.TIMESTAMP.toString()))));
+      return result;
+    }
+
+    /**
+     * @return the commitLogRowKey
+     */
+    public String getCommitLogRowKey() {
+      return commitLogRowKey;
+    }
+
+    /**
+     * @param commitLogRowKey the commitLogRowKey to set
+     */
+    public void setCommitLogRowKey(String commitLogRowKey) {
+      this.commitLogRowKey = commitLogRowKey;
     }
 }

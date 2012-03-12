@@ -35,6 +35,7 @@ public class TriggerStore extends CassandraStore {
     private long lastFetchTime = -1;
     private static final int REFRESH_INTERVAL = 1000 * 30; // 30 seconds
     Map<String, List<Trigger>> triggerMap = null;
+    Map<String, Trigger> triggerCache = null;
 
 
     public TriggerStore(String keyspace, String columnFamily) throws Exception {
@@ -49,10 +50,14 @@ public class TriggerStore extends CassandraStore {
     }
 
     @SuppressWarnings("unchecked")
-    public static Trigger getTrigger(String triggerClass) throws Exception {
+    public static Trigger getTrigger(String triggerClass, Map<String, Trigger> cache) throws Exception {
         try {
-            Class<Trigger> clazz = (Class<Trigger>) Class.forName(triggerClass);
-            return clazz.newInstance();
+            if(cache.get(triggerClass) == null) {
+                Class<Trigger> clazz = (Class<Trigger>) Class.forName(triggerClass);
+                Trigger trigger = clazz.newInstance();
+                cache.put(triggerClass, trigger);
+            }
+            return cache.get(triggerClass);
         } catch (Exception e) {
             logger.error("Could not create trigger class [" + triggerClass + "], it will NOT run.", e);
         }
@@ -65,6 +70,7 @@ public class TriggerStore extends CassandraStore {
         if (timeSinceRefresh > REFRESH_INTERVAL) {
             this.lastFetchTime = currentTime;
             this.triggerMap = new HashMap<String, List<Trigger>>();
+            this.triggerCache = new HashMap<String, Trigger>();
             SlicePredicate predicate = new SlicePredicate();
             SliceRange range = new SliceRange(ByteBufferUtil.bytes(""), ByteBufferUtil.bytes(""), false, 10);
             predicate.setSlice_range(range);
@@ -77,8 +83,11 @@ public class TriggerStore extends CassandraStore {
                     ConsistencyLevel.ALL);
             for (KeySlice slice : rows) {
                 String columnFamily = ByteBufferUtil.string(slice.key);
-                triggerMap.put(columnFamily, processRow(slice));
+                triggerMap.put(columnFamily, processRow(slice, triggerCache));
             }
+        }
+        if(logger.isDebugEnabled()) {
+            logger.debug("time in getTriggers: " + (System.currentTimeMillis() - currentTime));
         }
         return triggerMap;
     }
@@ -97,7 +106,7 @@ public class TriggerStore extends CassandraStore {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private List<Trigger> processRow(KeySlice slice) throws Exception {
+    private List<Trigger> processRow(KeySlice slice, Map<String, Trigger> cache) throws Exception {
         List<Trigger> triggers = new ArrayList<Trigger>();
         for (ColumnOrSuperColumn column : slice.columns) {
             String className = ByteBufferUtil.string(column.column.name);
@@ -105,7 +114,7 @@ public class TriggerStore extends CassandraStore {
             if (PAUSED.equals(StringUtils.upperCase(className)) && ENABLED.equals(enabled)) {
                 return new ArrayList(Arrays.asList(new Trigger[] { new PausedTrigger() }));
             } else if (enabled.equals(ENABLED)) {
-                Trigger trigger = getTrigger(className);
+                Trigger trigger = getTrigger(className, cache);
                 if (trigger != null)
                     triggers.add(trigger);
             }
