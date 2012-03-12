@@ -13,9 +13,11 @@ public class TriggerExecutionThread implements Runnable {
     private static Logger logger = LoggerFactory.getLogger(DistributedCommitLog.class);
 
     private BlockingQueue<LogEntry> workQueue = null;
+    private ProcessingManager processing;
 
-    public TriggerExecutionThread(BlockingQueue<LogEntry> workQueue) {
+    public TriggerExecutionThread(BlockingQueue<LogEntry> workQueue, ProcessingManager processing) {
         this.workQueue = workQueue;
+        this.processing = processing;
     }
 
     public void run() {
@@ -60,11 +62,13 @@ public class TriggerExecutionThread implements Runnable {
                     }
                     if (LogEntryStatus.ERROR.equals(logEntry.getStatus())) {
                         DistributedCommitLog.getLog().errorLogEntry(logEntry);
+                        DistributedCommitLog.getLog().removeLogEntry(logEntry);
                     } else {
                         // Provided all processed properly, remove
                         // the logEntry
                         DistributedCommitLog.getLog().removeLogEntry(logEntry);
                     }
+                    processing.remove(logEntry.getUuid());
                 }
             }
         }
