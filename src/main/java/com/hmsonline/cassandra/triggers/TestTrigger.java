@@ -10,7 +10,6 @@ public class TestTrigger implements Trigger {
     public void process(LogEntry logEntry) {
         logger.debug("Trigger processing : [" + logEntry.getUuid() + "]");   
         wasCalled = true;
-        throw new RuntimeException("Foo");
     }
 
     public static boolean wasCalled() {
