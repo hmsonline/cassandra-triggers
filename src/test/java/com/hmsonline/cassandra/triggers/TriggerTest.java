@@ -43,12 +43,12 @@ public class TriggerTest extends AbstractTriggerTest {
         Map<String, String> columns = new HashMap<String,String>();
         columns.put("col1", "val1");
         this.persist(cluster, DATA_KEYSPACE, DATA_CF1, ROW_KEY, columns);
-        List<LogEntry> logEntries = DistributedCommitLog.getLog().getPending();
+        List<LogEntry> logEntries = CommitLog.getCommitLog().getPending();
         Thread.sleep(100);
         assertTrue(logEntries.size() >= 1);
         Thread.currentThread();
         Thread.sleep(5000);
-        logEntries = DistributedCommitLog.getLog().getPending();
+        logEntries = CommitLog.getCommitLog().getPending();
         assertEquals(0, logEntries.size());
         assertTrue(TestTrigger.wasCalled());
     }
