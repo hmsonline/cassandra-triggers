@@ -62,6 +62,7 @@ public class TriggerExecutionThread implements Runnable {
                     }
                     if (LogEntryStatus.ERROR.equals(logEntry.getStatus())) {
                         DistributedCommitLog.getLog().errorLogEntry(logEntry);
+                        DistributedCommitLog.getLog().removeLogEntry(logEntry);
                     } else {
                         // Provided all processed properly, remove
                         // the logEntry

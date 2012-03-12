@@ -10,7 +10,8 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
+
+import net.sf.json.JSONSerializer;
 
 import org.apache.cassandra.db.ColumnFamily;
 import org.apache.cassandra.db.RowMutation;
@@ -18,9 +19,6 @@ import org.apache.cassandra.thrift.ColumnOrSuperColumn;
 import org.apache.cassandra.thrift.ColumnParent;
 import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.apache.cassandra.thrift.IndexClause;
-import org.apache.cassandra.thrift.IndexExpression;
-import org.apache.cassandra.thrift.IndexOperator;
 import org.apache.cassandra.thrift.KeyRange;
 import org.apache.cassandra.thrift.KeySlice;
 import org.apache.cassandra.thrift.Mutation;
@@ -35,14 +33,12 @@ public class DistributedCommitLog extends CassandraStore {
 
     public static final String KEYSPACE = "triggers";
     public static final String COLUMN_FAMILY = "CommitLog";
-    public static final int MAX_NUMBER_COLUMNS = 1000;
-    public static final int BATCH_SIZE = 100;
-    
-    // This is the time in seconds before this host will process messages from other hosts.
-    public static final int TIME_BEFORE_PROCESS_OTHER_HOST = 20;  
+    public static final String ERROR_COLUMN_FAMILY = "ErrorLog";
+    public static final int MAX_NUMBER_COLUMNS = 100;
+    public static final int BATCH_SIZE = 1000;
 
-    public static final int IN_FUTURE = 1000 * 60;
     private static DistributedCommitLog instance = null;
+    private static CassandraStore errors = null;
     private Thread triggerThread = null;
     private static final long MAX_LOG_ENTRY_AGE = 5000; // age of entry, at
                                                         // which time any node
@@ -62,9 +58,17 @@ public class DistributedCommitLog extends CassandraStore {
     public static synchronized DistributedCommitLog getLog() throws Exception {
         if (instance == null) {
             instance = new DistributedCommitLog(KEYSPACE, COLUMN_FAMILY);
+            getErrorLog();
         }
         return instance;
     }
+    
+    public static synchronized CassandraStore getErrorLog() throws Exception {
+      if (errors == null) {
+        errors = new CassandraStore(KEYSPACE, ERROR_COLUMN_FAMILY);
+      }
+      return errors;
+  }
 
     public List<LogEntry> writePending(ConsistencyLevel consistencyLevel, RowMutation rowMutation) throws Throwable {
         String keyspace = rowMutation.getTable();
@@ -72,11 +76,15 @@ public class DistributedCommitLog extends CassandraStore {
         List<LogEntry> entries = new ArrayList<LogEntry>();
         for (Integer cfId : rowMutation.getColumnFamilyIds()) {
             ColumnFamily columnFamily = rowMutation.getColumnFamily(cfId);
-            String hostName = this.getHostName();
-            LogEntry entry = new LogEntry(keyspace, columnFamily, rowKey, consistencyLevel, hostName,
-                    System.currentTimeMillis());
-            entries.add(entry);
-            writeLogEntry(entry);
+            String path = keyspace + ":" + columnFamily.metadata().cfName;
+            List<Trigger> triggers = TriggerStore.getStore().getTriggers().get(path);
+            if(triggers != null && triggers.size() > 0) {
+                String hostName = this.getHostName();
+                LogEntry entry = new LogEntry(keyspace, columnFamily, rowKey, consistencyLevel, hostName,
+                                              System.currentTimeMillis());
+                entries.add(entry);
+                writeLogEntry(entry);
+            }
         }
         return entries;
     }
@@ -91,36 +99,20 @@ public class DistributedCommitLog extends CassandraStore {
         keyRange.setStart_key(ByteBufferUtil.bytes(""));
         keyRange.setEnd_key(ByteBufferUtil.EMPTY_BYTE_BUFFER);
         ColumnParent parent = new ColumnParent(COLUMN_FAMILY);
-
-        IndexClause indexClause = new IndexClause();
-        indexClause.setCount(BATCH_SIZE);
-        indexClause.setStart_key(new byte[0]);
-        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes(LogEntryColumns.STATUS.toString()),
-                IndexOperator.EQ, ByteBufferUtil.bytes(LogEntryStatus.COMMITTED.toString())));
-
-        indexClause.addToExpressions(new IndexExpression(ByteBufferUtil.bytes(LogEntryColumns.HOST.toString()),
-                IndexOperator.EQ, ByteBufferUtil.bytes(this.getHostName())));
-
-        List<KeySlice> rows = getConnection(KEYSPACE).get_indexed_slices(parent, indexClause, predicate,
-                ConsistencyLevel.ALL);
+        
+        List<KeySlice> rows = getConnection(KEYSPACE).get_range_slices(parent, predicate, keyRange, ConsistencyLevel.ALL);
 
         result.addAll(toLogEntry(rows));
         return result;
     }
 
     public void writeLogEntry(LogEntry logEntry) throws Throwable {
+      writeLogEntry(logEntry, COLUMN_FAMILY);
+    }
+    
+    public void writeLogEntry(LogEntry logEntry, String columnFamily) throws Throwable {
         List<Mutation> slice = new ArrayList<Mutation>();
-        slice.add(getMutation(LogEntryColumns.KS.toString(), logEntry.getKeyspace()));
-        slice.add(getMutation(LogEntryColumns.CF.toString(), logEntry.getColumnFamily()));
-        slice.add(getMutation(LogEntryColumns.ROW.toString(), logEntry.getRowKey()));
-        slice.add(getMutation(LogEntryColumns.STATUS.toString(), logEntry.getStatus().toString()));
-        slice.add(getMutation(LogEntryColumns.TIMESTAMP.toString(), Long.toString(logEntry.getTimestamp())));
-        slice.add(getMutation(LogEntryColumns.HOST.toString(), logEntry.getHost()));
-        if (logEntry.hasErrors()) {
-            for (String errorKey : logEntry.getErrors().keySet()) {
-                slice.add(getMutation(errorKey, logEntry.getErrors().get(errorKey)));
-            }
-        }
+        slice.add(getMutation(logEntry.getUuid(), JSONSerializer.toJSON(logEntry.toMap()).toString()));
 
         if (ConfigurationStore.getStore().shouldWriteColumns()) {
             for (ColumnOperation operation : logEntry.getOperations()) {
@@ -133,9 +125,9 @@ public class DistributedCommitLog extends CassandraStore {
         }
         Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
         Map<String, List<Mutation>> cfMutations = new HashMap<String, List<Mutation>>();
-        cfMutations.put(COLUMN_FAMILY, slice);
+        cfMutations.put(columnFamily, slice);
 
-        ByteBuffer rowKey = ByteBufferUtil.bytes(logEntry.getUuid());
+        ByteBuffer rowKey = ByteBufferUtil.bytes(getKey());
         mutationMap.put(rowKey, cfMutations);
         getConnection(KEYSPACE).batch_mutate(mutationMap, logEntry.getConsistencyLevel());
     }
@@ -143,13 +135,14 @@ public class DistributedCommitLog extends CassandraStore {
     public void removeLogEntry(LogEntry logEntry) throws Throwable {
         long deleteTime = System.currentTimeMillis() * 1000;
         ColumnPath path = new ColumnPath(COLUMN_FAMILY);
+        path.setColumn(ByteBufferUtil.bytes(logEntry.getUuid()));
         getConnection(KEYSPACE)
-                .remove(ByteBufferUtil.bytes(logEntry.getUuid()), path, deleteTime, ConsistencyLevel.ALL);
+                .remove(ByteBufferUtil.bytes(logEntry.getCommitLogRowKey()), path, deleteTime, ConsistencyLevel.ALL);
     }
 
     public void errorLogEntry(LogEntry logEntry) throws Throwable {
         logEntry.setConsistencyLevel(ConsistencyLevel.ALL);
-        DistributedCommitLog.getLog().writeLogEntry(logEntry);
+        DistributedCommitLog.getLog().writeLogEntry(logEntry, ERROR_COLUMN_FAMILY);
     }
 
     public String getHostName() throws SocketException {
@@ -189,40 +182,24 @@ public class DistributedCommitLog extends CassandraStore {
         }
         for (KeySlice keySlice : rows) {
             if (keySlice.columns.size() > 0) {
-                LogEntry logEntry = new LogEntry();
-                logEntry.setUuid(ByteBufferUtil.string(keySlice.key));
                 for (ColumnOrSuperColumn cc : keySlice.columns) {
-                    if (ConfigurationStore.getStore().shouldWriteColumns()) {
-                        ColumnOperation operation = new ColumnOperation();
-                        operation.setName(cc.column.name);
-                        operation.setOperationType(cc.column.value);
-                    } else {
-                        switch (LogEntryColumns.valueOf(ByteBufferUtil.string(cc.column.name))) {
-                        case KS:
-                            logEntry.setKeyspace(ByteBufferUtil.string(cc.column.value));
-                            break;
-                        case CF:
-                            logEntry.setColumnFamily(ByteBufferUtil.string(cc.column.value));
-                            break;
-                        case ROW:
-                            logEntry.setRowKey(cc.column.value);
-                            break;
-                        case STATUS:
-                            logEntry.setStatus(LogEntryStatus.valueOf(ByteBufferUtil.string(cc.column.value)));
-                            break;
-                        case TIMESTAMP:
-                            logEntry.setTimestamp(Long.valueOf(ByteBufferUtil.string(cc.column.value)));
-                            break;
-                        case HOST:
-                            logEntry.setHost(ByteBufferUtil.string(cc.column.value));
-                            break;
-                        }
+                    LogEntry logEntry = LogEntry.fromJson(ByteBufferUtil.string(cc.column.value));
+                    if(logEntry != null) {
+                        logEntry.setCommitLogRowKey(ByteBufferUtil.string(keySlice.key));
+                        logEntry.setUuid(ByteBufferUtil.string(cc.column.name));
+                        logEntries.add(logEntry);
                     }
                 }
-                logEntries.add(logEntry);
             }
         }
         return logEntries;
     }
-
+    
+    private String getKey() {
+      return "" + getHoursSinceEpoch();
+    }
+    
+    private static long getHoursSinceEpoch() {
+      return System.currentTimeMillis() / (1000 * 1000 * 60);
+    }
 }
