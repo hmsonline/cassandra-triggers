@@ -39,6 +39,7 @@ public class LogEntry {
     private long timestamp = -1;
 
     public LogEntry() {
+        this.setConsistencyLevel(ConsistencyLevel.ALL);        
     }
 
     public LogEntry(String keyspace, ColumnFamily columnFamily, ByteBuffer rowKey, ConsistencyLevel consistencyLevel,

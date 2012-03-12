@@ -34,7 +34,7 @@ public class TriggerTask implements Runnable {
         while (true) {
             try {
                 if (ConfigurationStore.getStore().isCommitLogEnabled()) {
-                    List<LogEntry> logEntries = DistributedCommitLog.getLog().getPending();
+                    List<LogEntry> logEntries = CommitLog.getCommitLog().getPending();
                     if (logger.isDebugEnabled() && logEntries != null) {
                         logger.debug("Processing [" + logEntries.size() + "] logEntries.");
                     }

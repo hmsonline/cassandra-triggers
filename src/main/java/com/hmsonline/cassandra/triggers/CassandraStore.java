@@ -36,7 +36,7 @@ public class CassandraStore {
         this.create(indexedColumns);
     }
 
-    Cassandra.Iface getConnection(String keyspace) throws Exception {
+    public Cassandra.Iface getConnection(String keyspace) throws Exception {
         CassandraServer server = new CassandraServer();
         if (keyspace != null) {
             server.set_keyspace(keyspace);

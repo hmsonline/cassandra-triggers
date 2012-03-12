@@ -34,7 +34,7 @@ public class CassandraServerTriggerAspect {
             catch (InvalidRequestException e) {
               if(logEntries != null) {
                   for(LogEntry logEntry : logEntries) {
-                      DistributedCommitLog.getLog().removeLogEntry(logEntry);
+                      CommitLog.getCommitLog().remove(logEntry);
                   }
               }
             }
@@ -64,8 +64,8 @@ public class CassandraServerTriggerAspect {
                 RowMutation rowMutation = (RowMutation) mutation;
                 logger.debug("Mutation for [" + rowMutation.getTable() + "] with consistencyLevel [" + consistencyLevel
                         + "]");
-                if (!rowMutation.getTable().equals(DistributedCommitLog.KEYSPACE)) {
-                    logEntries.addAll(DistributedCommitLog.getLog().writePending(consistencyLevel, rowMutation));
+                if (!rowMutation.getTable().equals(CommitLog.KEYSPACE)) {
+                    logEntries.addAll(CommitLog.getCommitLog().writePending(consistencyLevel, rowMutation));
                 }
             }
         }
@@ -75,7 +75,7 @@ public class CassandraServerTriggerAspect {
     private void writeCommitted(List<LogEntry> logEntries) throws Throwable {
         for (LogEntry logEntry : logEntries) {
             logEntry.setStatus(LogEntryStatus.COMMITTED);
-            DistributedCommitLog.getLog().writeLogEntry(logEntry);
+            CommitLog.getCommitLog().write(logEntry);
         }
     }
 

@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TriggerExecutionThread implements Runnable {
-    private static Logger logger = LoggerFactory.getLogger(DistributedCommitLog.class);
+    private static Logger logger = LoggerFactory.getLogger(CommitLog.class);
 
     private BlockingQueue<LogEntry> workQueue = null;
     private ProcessingManager processing;
@@ -38,7 +38,7 @@ public class TriggerExecutionThread implements Runnable {
     protected void processLogEntry(LogEntry logEntry) throws Exception, Throwable {
         // Make sure its mine, or its old enough that I should pick
         // it up to ensure processing by someone
-        if (DistributedCommitLog.getLog().isMine(logEntry) || DistributedCommitLog.getLog().isOld(logEntry)) {
+        if (CommitLog.getCommitLog().isMine(logEntry) || CommitLog.getCommitLog().isOld(logEntry)) {
 
             // Make sure it hadn't error'd previously
             if (!LogEntryStatus.ERROR.equals(logEntry.getStatus())) {
@@ -61,12 +61,12 @@ public class TriggerExecutionThread implements Runnable {
                         }
                     }
                     if (LogEntryStatus.ERROR.equals(logEntry.getStatus())) {
-                        DistributedCommitLog.getLog().errorLogEntry(logEntry);
-                        DistributedCommitLog.getLog().removeLogEntry(logEntry);
+                        ErrorLog.getErrorLog().write(logEntry);
+                        CommitLog.getCommitLog().remove(logEntry);
                     } else {
                         // Provided all processed properly, remove
                         // the logEntry
-                        DistributedCommitLog.getLog().removeLogEntry(logEntry);
+                        CommitLog.getCommitLog().remove(logEntry);
                     }
                     processing.remove(logEntry.getUuid());
                 }
