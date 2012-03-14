@@ -7,14 +7,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
-
 import org.apache.cassandra.db.ColumnFamily;
 import org.apache.cassandra.db.IColumn;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.UUIDGen;
+import org.json.simple.JSONValue;
 
 public class LogEntry {
   
@@ -159,13 +157,15 @@ public class LogEntry {
         return null;
       }
       LogEntry result = new LogEntry();
-      JSONObject jsonObj = (JSONObject) JSONSerializer.toJSON(json);
-      result.setRowKey(ByteBufferUtil.bytes(jsonObj.getString(LogEntryColumns.ROW.toString())));
-      result.setKeyspace(jsonObj.getString(LogEntryColumns.KS.toString()));
-      result.setColumnFamily(jsonObj.getString(LogEntryColumns.CF.toString()));
-      result.setHost(jsonObj.getString(LogEntryColumns.HOST.toString()));
-      result.setStatus(LogEntryStatus.valueOf((jsonObj.getString(LogEntryColumns.STATUS.toString()))));
-      result.setTimestamp(Long.parseLong((jsonObj.getString(LogEntryColumns.TIMESTAMP.toString()))));
+      
+      @SuppressWarnings("unchecked")
+	  Map<String, String> jsonObj = (Map<String, String>) JSONValue.parse(json);
+      result.setRowKey(ByteBufferUtil.bytes(jsonObj.get(LogEntryColumns.ROW.toString())));
+      result.setKeyspace(jsonObj.get(LogEntryColumns.KS.toString()));
+      result.setColumnFamily(jsonObj.get(LogEntryColumns.CF.toString()));
+      result.setHost(jsonObj.get(LogEntryColumns.HOST.toString()));
+      result.setStatus(LogEntryStatus.valueOf((jsonObj.get(LogEntryColumns.STATUS.toString()))));
+      result.setTimestamp(Long.parseLong((jsonObj.get(LogEntryColumns.TIMESTAMP.toString()))));
       return result;
     }
 

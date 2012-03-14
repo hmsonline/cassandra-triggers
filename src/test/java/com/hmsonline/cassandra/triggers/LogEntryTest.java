@@ -4,9 +4,8 @@ import java.nio.charset.CharacterCodingException;
 
 import junit.framework.Assert;
 
-import net.sf.json.JSONSerializer;
-
 import org.apache.cassandra.utils.ByteBufferUtil;
+import org.json.simple.JSONValue;
 import org.junit.Test;
 
 /**
@@ -21,7 +20,7 @@ public class LogEntryTest {
     le.setRowKey(ByteBufferUtil.bytes("abc"));
     le.setStatus(LogEntryStatus.COMMITTED);
     
-    String json = JSONSerializer.toJSON(le.toMap()).toString();
+    String json = JSONValue.toJSONString(le.toMap()).toString();
     
     LogEntry result = LogEntry.fromJson(json);
     Assert.assertEquals(le.getRowKey(), result.getRowKey());
