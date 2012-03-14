@@ -10,14 +10,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.sf.json.JSONSerializer;
-
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
 import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.KeySlice;
 import org.apache.cassandra.thrift.Mutation;
 import org.apache.cassandra.utils.ByteBufferUtil;
+import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +34,7 @@ public class LogEntryStore extends CassandraStore {
 
     public void write(LogEntry logEntry, String columnFamily) throws Throwable {
         List<Mutation> slice = new ArrayList<Mutation>();
-        slice.add(getMutation(logEntry.getUuid(), JSONSerializer.toJSON(logEntry.toMap()).toString()));
+        slice.add(getMutation(logEntry.getUuid(), JSONValue.toJSONString(logEntry.toMap()).toString()));
 
         if (ConfigurationStore.getStore().shouldWriteColumns()) {
             for (ColumnOperation operation : logEntry.getOperations()) {
