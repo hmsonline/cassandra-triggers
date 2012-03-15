@@ -86,7 +86,7 @@ public class CassandraStore {
                 logger.debug("Created column family [" + this.getKeyspace() + ":" + this.getColumnFamily()
                         + "]");
             } catch (Exception e) {
-                logger.error("Did not create [" + this.getKeyspace() + ":" + this.getColumnFamily()
+                logger.warn("Did not create [" + this.getKeyspace() + ":" + this.getColumnFamily()
                         + "] (probably already there)", e);
             }
         }
