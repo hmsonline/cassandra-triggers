@@ -27,13 +27,13 @@ public class CassandraStore {
     protected CassandraStore(String keyspace, String columnFamily) throws Exception {
         this.keyspace = keyspace;
         this.columnFamily = columnFamily;
-        this.create(new String[] {});
+        //this.create(new String[] {});
     }
 
     protected CassandraStore(String keyspace, String columnFamily, String[] indexedColumns) throws Exception {
         this.keyspace = keyspace;
         this.columnFamily = columnFamily;
-        this.create(indexedColumns);
+        //this.create(indexedColumns);
     }
 
     public Cassandra.Iface getConnection(String keyspace) throws Exception {
@@ -83,9 +83,11 @@ public class CassandraStore {
 
                 getConnection(this.getKeyspace()).system_add_column_family(columnFamily);
                 initialized = true;
+                logger.debug("Created column family [" + this.getKeyspace() + ":" + this.getColumnFamily()
+                        + "]");
             } catch (Exception e) {
-                logger.debug("Did not create [" + this.getKeyspace() + ":" + this.getColumnFamily()
-                        + "] (probably already there)");
+                logger.error("Did not create [" + this.getKeyspace() + ":" + this.getColumnFamily()
+                        + "] (probably already there)", e);
             }
         }
     }

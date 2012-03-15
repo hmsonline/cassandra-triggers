@@ -32,6 +32,7 @@ public class TriggerTask implements Runnable {
     public void run() {
         boolean gotUpdates = false;
         while (true) {
+            gotUpdates = false;
             try {
                 if (ConfigurationStore.getStore().isCommitLogEnabled()) {
                     List<LogEntry> logEntries = CommitLog.getCommitLog().getPending();
@@ -48,13 +49,9 @@ public class TriggerTask implements Runnable {
                 } else {
                     logger.debug("Skipping trigger execution because commit log is disabled.");
                 }
-                if(gotUpdates) {
-                    gotUpdates = false;
-                } 
-                else {
+                if(!gotUpdates) {
                     Thread.sleep(1000);
                 }
-                
             } catch (Throwable t) {
                 logger.error("Could not execute triggers.", t);
             }
