@@ -42,6 +42,10 @@ public abstract class AbstractTriggerTest {
             }
             started = true;
         }
+        ErrorLog.getErrorLog().create(new String[]{});
+        CommitLog.getCommitLog().create(new String[]{});
+        TriggerStore.getStore().create(new String[]{});
+        ConfigurationStore.getStore().create(new String[]{});
     }
 
     private void loadDataSchema(String keyspaceName, List<String> colFamilyNames) {
