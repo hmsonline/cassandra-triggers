@@ -27,13 +27,17 @@ public class CassandraStore {
     protected CassandraStore(String keyspace, String columnFamily) throws Exception {
         this.keyspace = keyspace;
         this.columnFamily = columnFamily;
-        //this.create(new String[] {});
+        // Commented to avoid schema disagreement 
+        // Safe to uncomment when 1.1 is released
+        // this.create(new String[] {});
     }
 
     protected CassandraStore(String keyspace, String columnFamily, String[] indexedColumns) throws Exception {
         this.keyspace = keyspace;
         this.columnFamily = columnFamily;
-        //this.create(indexedColumns);
+        // Commented to avoid schema disagreement 
+        // Safe to uncomment when 1.1 is released
+        // this.create(indexedColumns);
     }
 
     public Cassandra.Iface getConnection(String keyspace) throws Exception {
