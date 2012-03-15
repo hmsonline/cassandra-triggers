@@ -22,10 +22,10 @@ import org.slf4j.LoggerFactory;
 
 public class LogEntryStore extends CassandraStore {
     private static Logger logger = LoggerFactory.getLogger(LogEntryStore.class);
-    private String hostName = null;
+    private static String hostName = null;
 
     protected LogEntryStore(String keyspace, String columnFamily) throws Exception {
-        super(keyspace, columnFamily);
+        super(keyspace, columnFamily + "_" + getHostName());
     }
 
     public void write(LogEntry logEntry) throws Throwable {
@@ -62,7 +62,7 @@ public class LogEntryStore extends CassandraStore {
                 ConsistencyLevel.ALL);
     }
 
-    public String getHostName() throws SocketException {
+    public static String getHostName() throws SocketException {
         if (hostName == null) {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
             {
@@ -78,8 +78,9 @@ public class LogEntryStore extends CassandraStore {
                     }
                 }
             }
+            hostName = hostName.substring(0, hostName.indexOf('.'));
         }
-        return this.hostName;
+        return hostName;
     }
 
     private static String getKey() {
