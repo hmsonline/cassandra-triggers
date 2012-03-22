@@ -50,7 +50,7 @@ public class TriggerTask implements Runnable {
                     logger.debug("Skipping trigger execution because commit log is disabled.");
                 }
             } catch (Throwable t) {
-                logger.warn("Could not execute triggers.", t.getMessage());
+                logger.warn("Could not execute triggers [" + t.getMessage() + "]");
                 logger.debug("Cause for not executing triggers.", t);
             }
             if (!gotUpdates) {
