@@ -48,6 +48,10 @@ public class CassandraStore {
         return server;
     }
 
+    public synchronized void create() throws Exception {
+        this.create(new String[]{});
+    }
+    
     public synchronized void create(String[] indexedColumns) throws Exception {
         if (!initialized) {
             try {

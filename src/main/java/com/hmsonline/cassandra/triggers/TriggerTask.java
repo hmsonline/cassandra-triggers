@@ -40,7 +40,7 @@ public class TriggerTask implements Runnable {
                         logger.debug("Processing [" + logEntries.size() + "] logEntries.");
                     }
                     for (LogEntry logEntry : logEntries) {
-                        if(!processing.isAlreadyBeingProcessed(logEntry.getUuid())) {
+                        if (!processing.isAlreadyBeingProcessed(logEntry.getUuid())) {
                             gotUpdates = true;
                             workQueue.put(logEntry);
                             processing.add(logEntry.getUuid());
@@ -49,14 +49,18 @@ public class TriggerTask implements Runnable {
                 } else {
                     logger.debug("Skipping trigger execution because commit log is disabled.");
                 }
-                if(!gotUpdates) {
-                    Thread.sleep(1000);
-                }
             } catch (Throwable t) {
-                logger.error("Could not execute triggers.", t);
+                logger.warn("Could not execute triggers.", t.getMessage());
+                logger.debug("Cause for not executing triggers.", t);
+            }
+            if (!gotUpdates) {
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                    logger.error("Couldn't sleep.", e);
+                }
             }
         }
     }
-    
 
 }
