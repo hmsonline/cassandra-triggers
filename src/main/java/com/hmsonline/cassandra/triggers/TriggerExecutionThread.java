@@ -68,8 +68,8 @@ public class TriggerExecutionThread implements Runnable {
                         // the logEntry
                         CommitLog.getCommitLog().remove(logEntry);
                     }
-                    processing.remove(logEntry.getUuid());
                 }
+                processing.remove(logEntry.getUuid());
             }
         }
     }
