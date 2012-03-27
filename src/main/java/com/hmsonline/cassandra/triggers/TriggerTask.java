@@ -9,7 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TriggerTask implements Runnable {
-    private static int THREAD_POOL_SIZE = 20;
+    private static final String THREAD_POOL_SIZE_PARAM = "cassandra.triggers.pool.size";
+    private static int threadPoolSize = 20;
     private static int MAX_QUEUE_SIZE = 500;
     private List<Thread> threadPool = new ArrayList<Thread>();
     private BlockingQueue<LogEntry> workQueue = null;
@@ -17,11 +18,15 @@ public class TriggerTask implements Runnable {
     private static Logger logger = LoggerFactory.getLogger(TriggerTask.class);
 
     public TriggerTask() {
+        String threadPoolParam = System.getProperty(THREAD_POOL_SIZE_PARAM);
+        if (threadPoolParam != null){
+            threadPoolSize = Integer.parseInt(threadPoolParam);            
+        }
         processing = new ProcessingManager();
         workQueue = new ArrayBlockingQueue<LogEntry>(MAX_QUEUE_SIZE);
         // Spinning up new thread pool
-        logger.debug("Spawning [" + THREAD_POOL_SIZE + "] threads for commit log processing.");
-        for (int i = 0; i < THREAD_POOL_SIZE; i++) {
+        logger.debug("Spawning [" + threadPoolSize + "] threads for commit log processing.");
+        for (int i = 0; i < threadPoolSize; i++) {
             TriggerExecutionThread runnable = new TriggerExecutionThread(workQueue, processing);
             Thread thread = new Thread(runnable);
             threadPool.add(thread);
