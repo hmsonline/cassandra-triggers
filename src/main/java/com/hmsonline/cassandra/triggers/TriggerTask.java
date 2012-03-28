@@ -9,13 +9,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TriggerTask implements Runnable {
+    private static Logger logger = LoggerFactory.getLogger(TriggerTask.class);
     private static final String THREAD_POOL_SIZE_PARAM = "cassandra.triggers.pool.size";
-    private static int threadPoolSize = 20;
-    private static int MAX_QUEUE_SIZE = 500;
+    private static final int MAX_QUEUE_SIZE = 500;
+
+    private int threadPoolSize = 20;
     private List<Thread> threadPool = new ArrayList<Thread>();
     private BlockingQueue<LogEntry> workQueue = null;
     private ProcessingManager processing;
-    private static Logger logger = LoggerFactory.getLogger(TriggerTask.class);
 
     public TriggerTask() {
         String threadPoolParam = System.getProperty(THREAD_POOL_SIZE_PARAM);
