@@ -1,6 +1,8 @@
 package com.hmsonline.cassandra.triggers;
 
 import java.nio.charset.CharacterCodingException;
+import java.util.ArrayList;
+import java.util.List;
 
 import junit.framework.Assert;
 
@@ -19,10 +21,14 @@ public class LogEntryTest {
     LogEntry le = new LogEntry();
     le.setRowKey(ByteBufferUtil.bytes("abc"));
     le.setStatus(LogEntryStatus.COMMITTED);
+    List<String> columnNames = new ArrayList<String>();
+    columnNames.add("col1");
+	le.setColumnNames(columnNames );
     
     String json = JSONValue.toJSONString(le.toMap()).toString();
     
     LogEntry result = LogEntry.fromJson(json);
     Assert.assertEquals(le.getRowKey(), result.getRowKey());
+    Assert.assertEquals(le.getColumnNames().iterator().next(), "col1");
   }
 }
