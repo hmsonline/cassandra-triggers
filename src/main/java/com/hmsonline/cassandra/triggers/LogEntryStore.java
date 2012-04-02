@@ -78,7 +78,11 @@ public class LogEntryStore extends CassandraStore {
                     }
                 }
             }
-            hostName = hostName.substring(0, hostName.indexOf('.'));
+            if(hostName.indexOf('.') > -1) {
+            	hostName = hostName.substring(0, hostName.indexOf('.'));
+            } else if(hostName.indexOf(':') > -1) {
+            	hostName = hostName.substring(0, hostName.indexOf(':'));
+            }
         }
         return hostName;
     }
