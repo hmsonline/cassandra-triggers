@@ -49,6 +49,12 @@ public class CommitLog extends LogEntryStore {
     }
 
     public List<LogEntry> writePending(ConsistencyLevel consistencyLevel, RowMutation rowMutation) throws Throwable {
+    	List<String> columnNames = new ArrayList<String>();
+    	for (ColumnFamily cf : rowMutation.getColumnFamilies()) {
+    		for(ByteBuffer b : cf.getColumnNames()) {
+    			columnNames.add(ByteBufferUtil.string(b));
+    		}
+    	}
         String keyspace = rowMutation.getTable();
         ByteBuffer rowKey = rowMutation.key();
         List<LogEntry> entries = new ArrayList<LogEntry>();
@@ -59,7 +65,7 @@ public class CommitLog extends LogEntryStore {
             if (triggers != null && triggers.size() > 0) {
                 String hostName = LogEntryStore.getHostName();
                 LogEntry entry = new LogEntry(keyspace, columnFamily, rowKey, consistencyLevel, hostName,
-                        System.currentTimeMillis());
+                        System.currentTimeMillis(), columnNames);
                 entries.add(entry);
                 write(entry);
             }
