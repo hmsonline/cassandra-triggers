@@ -1,5 +1,6 @@
 package com.hmsonline.cassandra.triggers;
 
+import java.net.SocketException;
 import java.nio.charset.CharacterCodingException;
 
 import junit.framework.Assert;
@@ -26,3 +27,5 @@ public class LogEntryTest {
     Assert.assertEquals(le.getRowKey(), result.getRowKey());
   }
 }
+
+

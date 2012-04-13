@@ -15,7 +15,7 @@ import org.apache.cassandra.utils.UUIDGen;
 import org.json.simple.JSONValue;
 
 public class LogEntry {
-  
+
     private String commitLogRowKey = null;
     private String keyspace = null;
     private String columnFamily = null;
@@ -26,6 +26,7 @@ public class LogEntry {
     private String uuid = null;
     private Map<String, String> errors = new HashMap<String, String>();
     private String host = null;
+
     public String getHost() {
         return host;
     }
@@ -37,12 +38,11 @@ public class LogEntry {
     private long timestamp = -1;
 
     public LogEntry() {
-        this.setConsistencyLevel(ConsistencyLevel.ALL);        
+        this.setConsistencyLevel(ConsistencyLevel.ALL);
     }
 
     public LogEntry(String keyspace, ColumnFamily columnFamily, ByteBuffer rowKey, ConsistencyLevel consistencyLevel,
-            String host, long timestamp)
-            throws Throwable {
+            String host, long timestamp) throws Throwable {
         this.columnFamily = columnFamily.metadata().cfName;
         this.keyspace = keyspace;
         this.rowKey = rowKey;
@@ -128,58 +128,60 @@ public class LogEntry {
     }
 
     public Map<String, String> getErrors() {
-      return errors;
+        return errors;
     }
 
     public void setErrors(Map<String, String> errors) {
-      this.errors = errors;
+        this.errors = errors;
     }
-    public boolean hasErrors(){
+
+    public boolean hasErrors() {
         return (this.getErrors() != null && this.getErrors().size() > 0);
     }
-    
+
     public Map<String, String> toMap() throws CharacterCodingException {
-      HashMap<String, String> result = new HashMap<String, String>();
-      result.put(LogEntryColumns.ROW.toString(), ByteBufferUtil.string(this.rowKey));
-      result.put(LogEntryColumns.HOST.toString(), this.host);
-      result.put(LogEntryColumns.KS.toString(), this.keyspace);
-      result.put(LogEntryColumns.CF.toString(), this.columnFamily);
-      result.put(LogEntryColumns.STATUS.toString(), "" + this.status);
-      result.put(LogEntryColumns.TIMESTAMP.toString(), "" + this.timestamp);
-      if(this.errors != null) {
-        result.putAll(this.errors);
-      }
-      return result;
+        HashMap<String, String> result = new HashMap<String, String>();
+        result.put(LogEntryColumns.ROW.toString(), ByteBufferUtil.string(this.rowKey));
+        result.put(LogEntryColumns.HOST.toString(), this.host);
+        result.put(LogEntryColumns.KS.toString(), this.keyspace);
+        result.put(LogEntryColumns.CF.toString(), this.columnFamily);
+        result.put(LogEntryColumns.STATUS.toString(), "" + this.status);
+        result.put(LogEntryColumns.TIMESTAMP.toString(), "" + this.timestamp);
+        if (this.errors != null) {
+            result.putAll(this.errors);
+        }
+        return result;
     }
-    
+
     public static LogEntry fromJson(String json) throws CharacterCodingException {
-      if(json == null || "".equals(json.trim())) {
-        return null;
-      }
-      LogEntry result = new LogEntry();
-      
-      @SuppressWarnings("unchecked")
-	  Map<String, String> jsonObj = (Map<String, String>) JSONValue.parse(json);
-      result.setRowKey(ByteBufferUtil.bytes(jsonObj.get(LogEntryColumns.ROW.toString())));
-      result.setKeyspace(jsonObj.get(LogEntryColumns.KS.toString()));
-      result.setColumnFamily(jsonObj.get(LogEntryColumns.CF.toString()));
-      result.setHost(jsonObj.get(LogEntryColumns.HOST.toString()));
-      result.setStatus(LogEntryStatus.valueOf((jsonObj.get(LogEntryColumns.STATUS.toString()))));
-      result.setTimestamp(Long.parseLong((jsonObj.get(LogEntryColumns.TIMESTAMP.toString()))));
-      return result;
+        if (json == null || "".equals(json.trim())) {
+            return null;
+        }
+        LogEntry result = new LogEntry();
+
+        @SuppressWarnings("unchecked")
+        Map<String, String> jsonObj = (Map<String, String>) JSONValue.parse(json);
+        result.setRowKey(ByteBufferUtil.bytes(jsonObj.get(LogEntryColumns.ROW.toString())));
+        result.setKeyspace(jsonObj.get(LogEntryColumns.KS.toString()));
+        result.setColumnFamily(jsonObj.get(LogEntryColumns.CF.toString()));
+        result.setHost(jsonObj.get(LogEntryColumns.HOST.toString()));
+        result.setStatus(LogEntryStatus.valueOf((jsonObj.get(LogEntryColumns.STATUS.toString()))));
+        result.setTimestamp(Long.parseLong((jsonObj.get(LogEntryColumns.TIMESTAMP.toString()))));
+        return result;
     }
 
     /**
      * @return the commitLogRowKey
      */
     public String getCommitLogRowKey() {
-      return commitLogRowKey;
+        return commitLogRowKey;
     }
 
     /**
-     * @param commitLogRowKey the commitLogRowKey to set
+     * @param commitLogRowKey
+     *            the commitLogRowKey to set
      */
     public void setCommitLogRowKey(String commitLogRowKey) {
-      this.commitLogRowKey = commitLogRowKey;
+        this.commitLogRowKey = commitLogRowKey;
     }
 }

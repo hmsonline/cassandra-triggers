@@ -37,7 +37,6 @@ public class TriggerStore extends CassandraStore {
     Map<String, List<Trigger>> triggerMap = null;
     Map<String, Trigger> triggerCache = null;
 
-
     public TriggerStore(String keyspace, String columnFamily) throws Exception {
         super(keyspace, columnFamily);
         logger.debug("Instantiated trigger store.");
@@ -52,7 +51,7 @@ public class TriggerStore extends CassandraStore {
     @SuppressWarnings("unchecked")
     public static Trigger getTrigger(String triggerClass, Map<String, Trigger> cache) throws Exception {
         try {
-            if(cache.get(triggerClass) == null) {
+            if (cache.get(triggerClass) == null) {
                 Class<Trigger> clazz = (Class<Trigger>) Class.forName(triggerClass);
                 Trigger trigger = clazz.newInstance();
                 cache.put(triggerClass, trigger);
@@ -86,7 +85,7 @@ public class TriggerStore extends CassandraStore {
                 triggerMap.put(columnFamily, processRow(slice, triggerCache));
             }
         }
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             logger.debug("time in getTriggers: " + (System.currentTimeMillis() - currentTime));
         }
         return triggerMap;

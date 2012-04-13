@@ -65,20 +65,18 @@ public class LogEntryStore extends CassandraStore {
     public static String getHostName() throws SocketException {
         if (hostName == null) {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-            {
-                while (interfaces.hasMoreElements()) {
-                    NetworkInterface nic = interfaces.nextElement();
-                    Enumeration<InetAddress> addresses = nic.getInetAddresses();
-                    while (hostName == null && addresses.hasMoreElements()) {
-                        InetAddress address = addresses.nextElement();
-                        if (!address.isLoopbackAddress()) {
-                            hostName = address.getHostName();
-                            logger.debug("Host ID: " + hostName);
-                        }
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface nic = interfaces.nextElement();
+                Enumeration<InetAddress> addresses = nic.getInetAddresses();
+                while (hostName == null && addresses.hasMoreElements()) {
+                    InetAddress address = addresses.nextElement();
+                    if (!address.isLoopbackAddress()) {
+                        hostName = address.getHostName();
+                        logger.debug("Host ID: " + hostName);
                     }
                 }
             }
-            hostName = hostName.substring(0, hostName.indexOf('.'));
+            hostName = hostName.replace(".", "_");
         }
         return hostName;
     }
