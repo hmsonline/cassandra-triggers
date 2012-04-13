@@ -80,7 +80,7 @@ public class LogEntryStore extends CassandraStore {
             }
             hostName = hostName.replaceAll(":", "_");
             hostName = hostName.replaceAll("%", "_");
-            hostName = hostName.replaceAll(".", "_");
+            hostName = hostName.replaceAll("\\.", "_");
         }
         return hostName;
     }
