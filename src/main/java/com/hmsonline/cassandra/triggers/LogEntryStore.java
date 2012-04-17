@@ -23,25 +23,30 @@ import org.slf4j.LoggerFactory;
 public class LogEntryStore extends CassandraStore {
     private static Logger logger = LoggerFactory.getLogger(LogEntryStore.class);
     private static String hostName = null;
+    private static final int DELETE_PRIORITY = 3;
 
     protected LogEntryStore(String keyspace, String columnFamily) throws Exception {
         super(keyspace, columnFamily + "_" + getHostName());
     }
 
     public void write(LogEntry logEntry) throws Throwable {
-        write(logEntry, this.getColumnFamily());
+        write(logEntry, this.getColumnFamily(), DEFAULT_PRIORITY);
+    }
+    
+    public void write(LogEntry logEntry, int priority) throws Throwable {
+        write(logEntry, this.getColumnFamily(), priority);
     }
 
-    public void write(LogEntry logEntry, String columnFamily) throws Throwable {
+    public void write(LogEntry logEntry, String columnFamily, int priority) throws Throwable {
         List<Mutation> slice = new ArrayList<Mutation>();
-        slice.add(getMutation(logEntry.getUuid(), JSONValue.toJSONString(logEntry.toMap()).toString()));
+        slice.add(getMutation(logEntry.getUuid(), JSONValue.toJSONString(logEntry.toMap()).toString(), priority));
 
         if (ConfigurationStore.getStore().shouldWriteColumns()) {
             for (ColumnOperation operation : logEntry.getOperations()) {
                 if (operation.isDelete()) {
-                    slice.add(getMutation(operation.getName(), OperationType.DELETE));
+                    slice.add(getMutation(operation.getName(), OperationType.DELETE, DELETE_PRIORITY));
                 } else {
-                    slice.add(getMutation(operation.getName(), OperationType.UPDATE));
+                    slice.add(getMutation(operation.getName(), OperationType.UPDATE, priority));
                 }
             }
         }
