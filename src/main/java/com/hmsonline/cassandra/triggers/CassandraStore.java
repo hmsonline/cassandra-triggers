@@ -1,7 +1,6 @@
 package com.hmsonline.cassandra.triggers;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.List;
 
