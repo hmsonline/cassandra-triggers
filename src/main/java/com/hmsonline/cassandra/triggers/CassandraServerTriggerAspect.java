@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 @Aspect
 public class CassandraServerTriggerAspect {
     private static Logger logger = LoggerFactory.getLogger(CassandraServerTriggerAspect.class);
+    private static final int UPDATE_PRIORITY = 2;
     
     @Around("execution(* org.apache.cassandra.thrift.CassandraServer.doInsert(..))")
     public void writeToCommitLog(ProceedingJoinPoint thisJoinPoint) throws Throwable {
@@ -75,7 +76,7 @@ public class CassandraServerTriggerAspect {
     private void writeCommitted(List<LogEntry> logEntries) throws Throwable {
         for (LogEntry logEntry : logEntries) {
             logEntry.setStatus(LogEntryStatus.COMMITTED);
-            CommitLog.getCommitLog().write(logEntry);
+            CommitLog.getCommitLog().write(logEntry, UPDATE_PRIORITY);
         }
     }
 

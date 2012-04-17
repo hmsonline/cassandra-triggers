@@ -1,6 +1,7 @@
 package com.hmsonline.cassandra.triggers;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 public class CassandraStore {
     private static Logger logger = LoggerFactory.getLogger(CassandraStore.class);
+    public static final int DEFAULT_PRIORITY = 0;
     private boolean initialized = false;
     private String keyspace = null;
     private String columnFamily = null;
@@ -108,25 +110,35 @@ public class CassandraStore {
         return columnFamily;
     }
     
-    // Utility Methods
     protected Mutation getMutation(String name, String value) {
-        return getMutation(name, ByteBufferUtil.bytes(value));
+    	//Defualt low priority
+        return getMutation(name, ByteBufferUtil.bytes(value), 0);
+    }
+    
+    // Utility Methods
+    protected Mutation getMutation(String name, String value, int priority) {
+        return getMutation(name, ByteBufferUtil.bytes(value), priority);
     }
 
 
-    protected Mutation getMutation(String name, ByteBuffer value) {
-        return getMutation(ByteBufferUtil.bytes(name), value);
+    protected Mutation getMutation(String name, ByteBuffer value, int priority) {
+        return getMutation(ByteBufferUtil.bytes(name), value, priority);
     }
 
     protected Mutation getMutation(ByteBuffer name, OperationType value) {
-        return getMutation(name, ByteBufferUtil.bytes(value.toString()));
+    	//Defualt low priority
+        return getMutation(name, ByteBufferUtil.bytes(value.toString()), DEFAULT_PRIORITY);
+    }
+    
+    protected Mutation getMutation(ByteBuffer name, OperationType value, int priority) {
+        return getMutation(name, ByteBufferUtil.bytes(value.toString()), priority);
     }
 
-    protected Mutation getMutation(ByteBuffer name, ByteBuffer value) {
+    protected Mutation getMutation(ByteBuffer name, ByteBuffer value, int priority) {
         Column c = new Column();
         c.setName(name);
         c.setValue(value);
-        c.setTimestamp(System.currentTimeMillis() * 1000);
+        c.setTimestamp((System.currentTimeMillis() * 1000) + priority);
 
         Mutation m = new Mutation();
         ColumnOrSuperColumn cc = new ColumnOrSuperColumn();
