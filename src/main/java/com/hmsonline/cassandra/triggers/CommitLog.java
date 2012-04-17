@@ -25,6 +25,7 @@ public class CommitLog extends LogEntryStore {
     public static final String COLUMN_FAMILY_PREFIX = "CommitLog";
     public static final int MAX_NUMBER_COLUMNS = 100;
     public static final int BATCH_SIZE = 1000;
+    private static final int PENDING_PRIORITY = 1;
 
     private Thread triggerThread = null;
     private static final long MAX_LOG_ENTRY_AGE = 5000; // age of entry, at
@@ -67,7 +68,7 @@ public class CommitLog extends LogEntryStore {
                 LogEntry entry = new LogEntry(keyspace, columnFamily, rowKey, consistencyLevel, hostName,
                         System.currentTimeMillis(), columnNames);
                 entries.add(entry);
-                write(entry);
+                write(entry, PENDING_PRIORITY);
             }
         }
         return entries;
