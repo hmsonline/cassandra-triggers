@@ -46,10 +46,9 @@ public class TriggerTask implements Runnable {
                         logger.debug("Processing [" + logEntries.size() + "] logEntries.");
                     }
                     for (LogEntry logEntry : logEntries) {
-                        if (!processing.isAlreadyBeingProcessed(logEntry.getUuid())) {
+                        if (LogEntryStatus.COMMITTED.equals(logEntry.getStatus()) && (!processing.isAlreadyBeingProcessed(logEntry.getUuid()))) {
                             gotUpdates = true;
                             workQueue.put(logEntry);
-                            processing.add(logEntry.getUuid());
                         }
                     }
                 } else {

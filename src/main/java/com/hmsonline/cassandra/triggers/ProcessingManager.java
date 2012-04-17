@@ -10,14 +10,16 @@ public class ProcessingManager {
     private static long TIME_TO_LIVE = 1000*60*10; // Ten minutes.
     private ConcurrentHashMap<String, Long> processing;
 
-    public boolean isAlreadyBeingProcessed(String key) {
+    public synchronized boolean isAlreadyBeingProcessed(String key) {
         Long histTime = getProcessing().get(key);
         long currTime = System.currentTimeMillis();
         if (histTime == null) {
+        	add(key);
             return false;
         } else {
             if ((currTime - histTime) > TIME_TO_LIVE) {
                 remove(key);
+                add(key);
                 return false;
             } else {
                 return true;
@@ -25,7 +27,7 @@ public class ProcessingManager {
         }
     }
 
-    public void add(String key) {
+    protected void add(String key) {
         getProcessing().put(key, System.currentTimeMillis());
     }
 
