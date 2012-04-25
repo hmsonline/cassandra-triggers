@@ -26,7 +26,6 @@ public class CommitLog extends LogEntryStore {
     public static final int MAX_NUMBER_COLUMNS = 100;
     public static final int BATCH_SIZE = 1000;
     private static final int PENDING_PRIORITY = 1;
-
     private Thread triggerThread = null;
     private static final long MAX_LOG_ENTRY_AGE = 5000; // age of entry, at
                                                         // which time any node
@@ -85,7 +84,7 @@ public class CommitLog extends LogEntryStore {
         keyRange.setEnd_key(ByteBufferUtil.EMPTY_BYTE_BUFFER);
         ColumnParent parent = new ColumnParent(this.getColumnFamily());
         List<KeySlice> rows = getConnection(KEYSPACE).get_range_slices(parent, predicate, keyRange,
-                ConsistencyLevel.ALL);
+                READ_CONSISTENCY);
         result.addAll(toLogEntry(rows));
         return result;
     }

@@ -38,22 +38,26 @@ public class LogEntry {
 
     private long timestamp = -1;
 
-    public LogEntry() {
-        this.setConsistencyLevel(ConsistencyLevel.ALL);        
+    public LogEntry(){        
     }
 
     public LogEntry(String keyspace, ColumnFamily columnFamily, ByteBuffer rowKey, ConsistencyLevel consistencyLevel,
             String host, long timestamp, Collection<String> columnNames)
             throws Throwable {
+        this(keyspace, rowKey, consistencyLevel, host, timestamp, columnNames);
         this.columnFamily = columnFamily.metadata().cfName;
-        this.keyspace = keyspace;
-        this.rowKey = rowKey;
         for (IColumn column : columnFamily.getSortedColumns()) {
             ColumnOperation operation = new ColumnOperation();
             operation.setName(column.name());
             operation.setDelete(columnFamily.isMarkedForDelete());
             operations.add(operation);
         }
+    }
+    
+    public LogEntry(String keyspace, ByteBuffer rowKey, ConsistencyLevel consistencyLevel,
+            String host, long timestamp, Collection<String> columnNames) {
+        this.keyspace = keyspace;
+        this.rowKey = rowKey;
         this.uuid = UUIDGen.getUUID(ByteBuffer.wrap(UUIDGen.getTimeUUIDBytes())).toString();
         this.status = LogEntryStatus.PREPARING;
         this.consistencyLevel = consistencyLevel;
@@ -150,6 +154,7 @@ public class LogEntry {
       result.put(LogEntryColumns.STATUS.toString(), "" + this.status);
       result.put(LogEntryColumns.TIMESTAMP.toString(), "" + this.timestamp);
       result.put(LogEntryColumns.COLUMN_NAMES.toString(), this.columnNames);
+      result.put(LogEntryColumns.CONSISTENCY_LEVEL.toString(), this.getConsistencyLevel().toString());
       if(this.errors != null) {
         result.putAll(this.errors);
       }
@@ -161,16 +166,18 @@ public class LogEntry {
       if(json == null || "".equals(json.trim())) {
         return null;
       }
-      LogEntry result = new LogEntry();
-      
       Map<String, Object> jsonObj = (Map<String, Object>) JSONValue.parse(json);
-      result.setRowKey(ByteBufferUtil.bytes((String) jsonObj.get(LogEntryColumns.ROW.toString())));
-      result.setKeyspace((String) jsonObj.get(LogEntryColumns.KS.toString()));
-      result.setColumnFamily((String) jsonObj.get(LogEntryColumns.CF.toString()));
-      result.setHost((String) jsonObj.get(LogEntryColumns.HOST.toString()));
+      ByteBuffer rowKey = ByteBufferUtil.bytes((String) jsonObj.get(LogEntryColumns.ROW.toString()));
+      String keyspace = (String) jsonObj.get(LogEntryColumns.KS.toString());
+      String columnFamily = (String) jsonObj.get(LogEntryColumns.CF.toString());
+      String host = (String) jsonObj.get(LogEntryColumns.HOST.toString());
+      ConsistencyLevel consistencyLevel =  ConsistencyLevel.valueOf((String)jsonObj.get(LogEntryColumns.CONSISTENCY_LEVEL.toString()));
+      long timestamp = Long.parseLong((String) (jsonObj.get(LogEntryColumns.TIMESTAMP.toString())));
+      Collection<String> columnNames = (List<String>) (jsonObj.get(LogEntryColumns.COLUMN_NAMES.toString()));
+      
+      LogEntry result = new LogEntry(keyspace, rowKey, consistencyLevel, host, timestamp, columnNames);      
       result.setStatus(LogEntryStatus.valueOf((String) (jsonObj.get(LogEntryColumns.STATUS.toString()))));
-      result.setTimestamp(Long.parseLong((String) (jsonObj.get(LogEntryColumns.TIMESTAMP.toString()))));
-      result.setColumnNames((List<String>) (jsonObj.get(LogEntryColumns.COLUMN_NAMES.toString())));
+      result.setColumnFamily(columnFamily);
       return result;
     }
 
