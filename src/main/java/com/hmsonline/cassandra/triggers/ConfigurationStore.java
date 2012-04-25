@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
 import org.apache.cassandra.thrift.ColumnParent;
-import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.KeyRange;
 import org.apache.cassandra.thrift.KeySlice;
@@ -75,7 +74,7 @@ public class ConfigurationStore extends CassandraStore {
             keyRange.setEnd_key(ByteBufferUtil.EMPTY_BYTE_BUFFER);
             ColumnParent parent = new ColumnParent(COLUMN_FAMILY);
             List<KeySlice> rows = getConnection(KEYSPACE).get_range_slices(parent, predicate, keyRange,
-                    ConsistencyLevel.ALL);
+                    READ_CONSISTENCY);
             for (KeySlice slice : rows) {
                 String component = ByteBufferUtil.string(slice.key);
                 Map<String, String> properties = new HashMap<String, String>();

@@ -80,7 +80,7 @@ public class TriggerStore extends CassandraStore {
             keyRange.setEnd_key(ByteBufferUtil.EMPTY_BYTE_BUFFER);
             ColumnParent parent = new ColumnParent(COLUMN_FAMILY);
             List<KeySlice> rows = getConnection(KEYSPACE).get_range_slices(parent, predicate, keyRange,
-                    ConsistencyLevel.ALL);
+                    READ_CONSISTENCY);
             for (KeySlice slice : rows) {
                 String columnFamily = ByteBufferUtil.string(slice.key);
                 triggerMap.put(columnFamily, processRow(slice, triggerCache));
@@ -102,7 +102,7 @@ public class TriggerStore extends CassandraStore {
 
         ByteBuffer rowKey = ByteBufferUtil.bytes(keyspace + ":" + columnFamily);
         mutationMap.put(rowKey, cfMutations);
-        getConnection(KEYSPACE).batch_mutate(mutationMap, ConsistencyLevel.ALL);
+        getConnection(KEYSPACE).batch_mutate(mutationMap, WRITE_CONSISTENCY);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

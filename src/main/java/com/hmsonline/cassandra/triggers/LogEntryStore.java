@@ -12,7 +12,6 @@ import java.util.Map;
 
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
 import org.apache.cassandra.thrift.ColumnPath;
-import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.KeySlice;
 import org.apache.cassandra.thrift.Mutation;
 import org.apache.cassandra.utils.ByteBufferUtil;
@@ -64,7 +63,7 @@ public class LogEntryStore extends CassandraStore {
         ColumnPath path = new ColumnPath(this.getColumnFamily());
         path.setColumn(ByteBufferUtil.bytes(logEntry.getUuid()));
         getConnection(this.getKeyspace()).remove(ByteBufferUtil.bytes(logEntry.getCommitLogRowKey()), path, deleteTime,
-                ConsistencyLevel.ALL);
+                READ_CONSISTENCY);
     }
 
     public static String getHostName() throws SocketException {

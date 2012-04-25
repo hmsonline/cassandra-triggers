@@ -10,6 +10,7 @@ import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ColumnDef;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
+import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.IndexType;
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.cassandra.thrift.Mutation;
@@ -24,6 +25,8 @@ public class CassandraStore {
     private boolean initialized = false;
     private String keyspace = null;
     private String columnFamily = null;
+    public static final ConsistencyLevel READ_CONSISTENCY = ConsistencyLevel.ONE;
+    public static final ConsistencyLevel WRITE_CONSISTENCY = ConsistencyLevel.ONE;
 
     protected CassandraStore(String keyspace, String columnFamily) throws Exception {
         this.keyspace = keyspace;

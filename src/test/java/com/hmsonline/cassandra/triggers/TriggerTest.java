@@ -27,20 +27,18 @@ import org.slf4j.LoggerFactory;
 public class TriggerTest extends AbstractTriggerTest {
     private final static String CLUSTER_NAME = "TEST_CLUSTER";
     private final static String ROW_KEY = "TEST_ROW_KEY";
-    
+
     public static final ByteBuffer COLUMN = ByteBufferUtil.bytes("2012-01-01_12:12:12");
     public static final ByteBuffer VALUE = ByteBufferUtil.bytes("{\"observation\":\"8\"}");
 
     private static Logger logger = LoggerFactory.getLogger(TriggerTest.class);
 
-    
     @org.junit.Test
     public void testLogWrite() throws Throwable {
-        TriggerStore.getStore().insertTrigger(DATA_KEYSPACE, DATA_CF1, 
-                "com.hmsonline.cassandra.triggers.TestTrigger");
-        
+        TriggerStore.getStore().insertTrigger(DATA_KEYSPACE, DATA_CF1, "com.hmsonline.cassandra.triggers.TestTrigger");
+
         Cluster cluster = HFactory.getOrCreateCluster(CLUSTER_NAME, "localhost:9160");
-        Map<String, String> columns = new HashMap<String,String>();
+        Map<String, String> columns = new HashMap<String, String>();
         columns.put("col1", "val1");
         this.persist(cluster, DATA_KEYSPACE, DATA_CF1, ROW_KEY, columns);
         List<LogEntry> logEntries = CommitLog.getCommitLog().getPending();
@@ -52,7 +50,7 @@ public class TriggerTest extends AbstractTriggerTest {
         assertEquals(0, logEntries.size());
         assertTrue(TestTrigger.wasCalled());
     }
-    
+
     @org.junit.Test
     public void testThrowingExceptionWhenInsertingColumn() throws Throwable {
         TTransport tr = new TFramedTransport(new TSocket("localhost", 9160));
