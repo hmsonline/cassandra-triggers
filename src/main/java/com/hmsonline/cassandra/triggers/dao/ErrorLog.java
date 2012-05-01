@@ -1,7 +1,8 @@
-package com.hmsonline.cassandra.triggers;
+package com.hmsonline.cassandra.triggers.dao;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 public class ErrorLog extends LogEntryStore {
     private static Logger logger = LoggerFactory.getLogger(ErrorLog.class);

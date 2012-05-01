@@ -1,4 +1,4 @@
-package com.hmsonline.cassandra.triggers;
+package com.hmsonline.cassandra.triggers.dao;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -23,6 +23,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hmsonline.cassandra.triggers.PausedTrigger;
+import com.hmsonline.cassandra.triggers.Trigger;
 
 public class TriggerStore extends CassandraStore {
     private static Logger logger = LoggerFactory.getLogger(TriggerStore.class);
