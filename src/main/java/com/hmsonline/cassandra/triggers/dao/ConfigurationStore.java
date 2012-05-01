@@ -1,4 +1,4 @@
-package com.hmsonline.cassandra.triggers;
+package com.hmsonline.cassandra.triggers.dao;
 
 import java.util.HashMap;
 import java.util.List;

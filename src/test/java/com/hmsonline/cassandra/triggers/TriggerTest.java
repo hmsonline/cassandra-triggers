@@ -24,6 +24,9 @@ import org.apache.thrift.transport.TTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hmsonline.cassandra.triggers.dao.CommitLog;
+import com.hmsonline.cassandra.triggers.dao.TriggerStore;
+
 public class TriggerTest extends AbstractTriggerTest {
     private final static String CLUSTER_NAME = "TEST_CLUSTER";
     private final static String ROW_KEY = "TEST_ROW_KEY";

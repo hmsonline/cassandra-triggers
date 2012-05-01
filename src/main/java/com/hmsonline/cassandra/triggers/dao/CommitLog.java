@@ -1,4 +1,4 @@
-package com.hmsonline.cassandra.triggers;
+package com.hmsonline.cassandra.triggers.dao;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -8,7 +8,9 @@ import java.util.List;
 
 import org.apache.cassandra.db.ColumnFamily;
 import org.apache.cassandra.db.RowMutation;
+import org.apache.cassandra.thrift.ColumnOrSuperColumn;
 import org.apache.cassandra.thrift.ColumnParent;
+import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.KeyRange;
 import org.apache.cassandra.thrift.KeySlice;
@@ -17,6 +19,10 @@ import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hmsonline.cassandra.triggers.LogEntry;
+import com.hmsonline.cassandra.triggers.Trigger;
+import com.hmsonline.cassandra.triggers.TriggerTask;
 
 public class CommitLog extends LogEntryStore {
     private static Logger logger = LoggerFactory.getLogger(CommitLog.class);
@@ -49,12 +55,12 @@ public class CommitLog extends LogEntryStore {
     }
 
     public List<LogEntry> writePending(ConsistencyLevel consistencyLevel, RowMutation rowMutation) throws Throwable {
-    	List<String> columnNames = new ArrayList<String>();
-    	for (ColumnFamily cf : rowMutation.getColumnFamilies()) {
-    		for(ByteBuffer b : cf.getColumnNames()) {
-    			columnNames.add(ByteBufferUtil.string(b));
-    		}
-    	}
+        List<String> columnNames = new ArrayList<String>();
+        for (ColumnFamily cf : rowMutation.getColumnFamilies()) {
+            for (ByteBuffer b : cf.getColumnNames()) {
+                columnNames.add(ByteBufferUtil.string(b));
+            }
+        }
         String keyspace = rowMutation.getTable();
         ByteBuffer rowKey = rowMutation.key();
         List<LogEntry> entries = new ArrayList<LogEntry>();
@@ -74,18 +80,27 @@ public class CommitLog extends LogEntryStore {
     }
 
     public List<LogEntry> getPending() throws Throwable {
+        /*
+         * Should revisit this perhaps.
+         */         
+        String thisHoursKey = this.getKey();
+        String previousHoursKey = this.getPreviousKey();
         List<LogEntry> result = new ArrayList<LogEntry>();
         SlicePredicate predicate = new SlicePredicate();
         SliceRange range = new SliceRange(ByteBufferUtil.bytes(""), ByteBufferUtil.bytes(""), false, MAX_NUMBER_COLUMNS);
         predicate.setSlice_range(range);
-
-        KeyRange keyRange = new KeyRange(BATCH_SIZE);
-        keyRange.setStart_key(ByteBufferUtil.bytes(""));
-        keyRange.setEnd_key(ByteBufferUtil.EMPTY_BYTE_BUFFER);
         ColumnParent parent = new ColumnParent(this.getColumnFamily());
-        List<KeySlice> rows = getConnection(KEYSPACE).get_range_slices(parent, predicate, keyRange,
+
+        // Get this hour's
+        List<ColumnOrSuperColumn> slice = getConnection(KEYSPACE).get_slice(ByteBufferUtil.bytes(thisHoursKey), parent,
+                predicate, READ_CONSISTENCY);
+        result.addAll(toLogEntry(thisHoursKey, slice));
+
+        // Get previous hour's
+        slice = getConnection(KEYSPACE).get_slice(ByteBufferUtil.bytes(previousHoursKey), parent, predicate,
                 READ_CONSISTENCY);
-        result.addAll(toLogEntry(rows));
+        result.addAll(toLogEntry(previousHoursKey, slice));
+
         return result;
     }
 

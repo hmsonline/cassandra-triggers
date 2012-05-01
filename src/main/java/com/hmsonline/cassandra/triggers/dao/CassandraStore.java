@@ -1,4 +1,4 @@
-package com.hmsonline.cassandra.triggers;
+package com.hmsonline.cassandra.triggers.dao;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -18,6 +18,8 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hmsonline.cassandra.triggers.OperationType;
 
 public class CassandraStore {
     private static Logger logger = LoggerFactory.getLogger(CassandraStore.class);

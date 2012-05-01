@@ -9,6 +9,10 @@ import java.util.concurrent.BlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hmsonline.cassandra.triggers.dao.CommitLog;
+import com.hmsonline.cassandra.triggers.dao.ErrorLog;
+import com.hmsonline.cassandra.triggers.dao.TriggerStore;
+
 public class TriggerExecutionThread implements Runnable {
     private static Logger logger = LoggerFactory.getLogger(CommitLog.class);
 
