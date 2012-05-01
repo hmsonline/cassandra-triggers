@@ -15,6 +15,9 @@ import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hmsonline.cassandra.triggers.dao.CommitLog;
+import com.hmsonline.cassandra.triggers.dao.ConfigurationStore;
+
 @Aspect
 public class CassandraServerTriggerAspect {
     private static Logger logger = LoggerFactory.getLogger(CassandraServerTriggerAspect.class);

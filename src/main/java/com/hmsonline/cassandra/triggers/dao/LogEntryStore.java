@@ -1,4 +1,4 @@
-package com.hmsonline.cassandra.triggers;
+package com.hmsonline.cassandra.triggers.dao;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -19,7 +19,11 @@ import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LogEntryStore extends CassandraStore {
+import com.hmsonline.cassandra.triggers.ColumnOperation;
+import com.hmsonline.cassandra.triggers.LogEntry;
+import com.hmsonline.cassandra.triggers.OperationType;
+
+public abstract class LogEntryStore extends CassandraStore {
     private static Logger logger = LoggerFactory.getLogger(LogEntryStore.class);
     private static String hostName = null;
     private static final int DELETE_PRIORITY = 3;
@@ -31,7 +35,7 @@ public class LogEntryStore extends CassandraStore {
     public void write(LogEntry logEntry) throws Throwable {
         write(logEntry, this.getColumnFamily(), DEFAULT_PRIORITY);
     }
-    
+
     public void write(LogEntry logEntry, int priority) throws Throwable {
         write(logEntry, this.getColumnFamily(), priority);
     }
@@ -89,26 +93,27 @@ public class LogEntryStore extends CassandraStore {
         return hostName;
     }
 
-    private static String getKey() {
+    public static String getKey() {
         long hours = System.currentTimeMillis() / (1000 * 1000 * 60);
         return "" + hours;
     }
+    
+    public static String getPreviousKey() {
+        long hours = (System.currentTimeMillis() / (1000 * 1000 * 60)) - 1;
+        return "" + hours;
+    }
 
-    public static List<LogEntry> toLogEntry(List<KeySlice> rows) throws Exception, Throwable {
+    public static List<LogEntry> toLogEntry(String rowKey, List<ColumnOrSuperColumn> columns) throws Exception, Throwable {
         List<LogEntry> logEntries = new ArrayList<LogEntry>();
-        if (rows == null || rows.size() == 0) {
+        if (columns == null || columns.size() == 0) {
             return logEntries;
         }
-        for (KeySlice keySlice : rows) {
-            if (keySlice.columns.size() > 0) {
-                for (ColumnOrSuperColumn cc : keySlice.columns) {
-                    LogEntry logEntry = LogEntry.fromJson(ByteBufferUtil.string(cc.column.value));
-                    if (logEntry != null) {
-                        logEntry.setCommitLogRowKey(ByteBufferUtil.string(keySlice.key));
-                        logEntry.setUuid(ByteBufferUtil.string(cc.column.name));
-                        logEntries.add(logEntry);
-                    }
-                }
+        for (ColumnOrSuperColumn cc : columns) {
+            LogEntry logEntry = LogEntry.fromJson(ByteBufferUtil.string(cc.column.value));
+            if (logEntry != null) {
+                logEntry.setCommitLogRowKey(rowKey);
+                logEntry.setUuid(ByteBufferUtil.string(cc.column.name));
+                logEntries.add(logEntry);
             }
         }
         return logEntries;

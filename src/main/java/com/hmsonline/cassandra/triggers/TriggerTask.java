@@ -8,6 +8,9 @@ import java.util.concurrent.BlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hmsonline.cassandra.triggers.dao.CommitLog;
+import com.hmsonline.cassandra.triggers.dao.ConfigurationStore;
+
 public class TriggerTask implements Runnable {
     private static Logger logger = LoggerFactory.getLogger(TriggerTask.class);
     private static final String THREAD_POOL_SIZE_PARAM = "cassandra.triggers.pool.size";

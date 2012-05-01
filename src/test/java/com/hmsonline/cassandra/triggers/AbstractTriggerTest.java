@@ -22,6 +22,11 @@ import org.apache.cassandra.thrift.CassandraDaemon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hmsonline.cassandra.triggers.dao.CommitLog;
+import com.hmsonline.cassandra.triggers.dao.ConfigurationStore;
+import com.hmsonline.cassandra.triggers.dao.ErrorLog;
+import com.hmsonline.cassandra.triggers.dao.TriggerStore;
+
 public abstract class AbstractTriggerTest {
     public static final String DATA_KEYSPACE = "Keyspace1";
     public static final String DATA_CF1 = "Indexed1";
