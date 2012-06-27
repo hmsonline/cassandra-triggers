@@ -10,10 +10,7 @@ import org.apache.cassandra.db.ColumnFamily;
 import org.apache.cassandra.db.RowMutation;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
 import org.apache.cassandra.thrift.ColumnParent;
-import org.apache.cassandra.thrift.ColumnPath;
 import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.apache.cassandra.thrift.KeyRange;
-import org.apache.cassandra.thrift.KeySlice;
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.utils.ByteBufferUtil;
@@ -83,8 +80,8 @@ public class CommitLog extends LogEntryStore {
         /*
          * Should revisit this perhaps.
          */         
-        String thisHoursKey = this.getKey();
-        String previousHoursKey = this.getPreviousKey();
+        String thisHoursKey = CommitLog.getKey();
+        String previousHoursKey = CommitLog.getPreviousKey();
         List<LogEntry> result = new ArrayList<LogEntry>();
         SlicePredicate predicate = new SlicePredicate();
         SliceRange range = new SliceRange(ByteBufferUtil.bytes(""), ByteBufferUtil.bytes(""), false, MAX_NUMBER_COLUMNS);
