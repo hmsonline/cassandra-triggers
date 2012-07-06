@@ -26,6 +26,7 @@ public abstract class LogEntryStore extends CassandraStore {
     private static Logger logger = LoggerFactory.getLogger(LogEntryStore.class);
     private static String hostName = null;
     private static final int DELETE_PRIORITY = 3;
+    private static final String INVALID_CF_NAME_CHAR = "[^a-zA-Z0-9_]";
 
     protected LogEntryStore(String keyspace, String columnFamily) throws Exception {
         super(keyspace, columnFamily + "_" + getHostName());
@@ -85,9 +86,7 @@ public abstract class LogEntryStore extends CassandraStore {
                     }
                 }
             }
-            hostName = hostName.replaceAll(":", "_");
-            hostName = hostName.replaceAll("%", "_");
-            hostName = hostName.replaceAll("\\.", "_");
+            hostName = hostName.replaceAll(INVALID_CF_NAME_CHAR, "_");
         }
         return hostName;
     }
