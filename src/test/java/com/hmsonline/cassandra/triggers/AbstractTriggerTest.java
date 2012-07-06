@@ -22,10 +22,7 @@ import org.apache.cassandra.thrift.CassandraDaemon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hmsonline.cassandra.triggers.dao.CommitLog;
 import com.hmsonline.cassandra.triggers.dao.ConfigurationStore;
-import com.hmsonline.cassandra.triggers.dao.ErrorLog;
-import com.hmsonline.cassandra.triggers.dao.TriggerStore;
 
 public abstract class AbstractTriggerTest {
     public static final String DATA_KEYSPACE = "Keyspace1";
@@ -47,10 +44,6 @@ public abstract class AbstractTriggerTest {
             }
             started = true;
         }
-        ErrorLog.getErrorLog().create(new String[] {});
-        CommitLog.getCommitLog().create(new String[] {});
-        TriggerStore.getStore().create(new String[] {});
-        ConfigurationStore.getStore().create(new String[] {});
     }
 
     private void loadDataSchema(String keyspaceName, List<String> colFamilyNames) {
@@ -68,7 +61,7 @@ public abstract class AbstractTriggerTest {
         KSMetaData validKsMetadata = KSMetaData.testMetadata(keyspaceName, strategyClass, strategyOptions, cfDefs);
         schema.add(validKsMetadata);
 
-        Schema.instance.load(schema, Schema.instance.getVersion());
+        Schema.instance.load(schema);
         logger.debug("======================= LOADED DATA SCHEMA FOR TESTS ==========================");
     }
 
