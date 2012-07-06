@@ -33,6 +33,7 @@ public class TriggerTask implements Runnable {
         for (int i = 0; i < threadPoolSize; i++) {
             TriggerExecutionThread runnable = new TriggerExecutionThread(workQueue, processing);
             Thread thread = new Thread(runnable);
+            Runtime.getRuntime().addShutdownHook(thread);
             threadPool.add(thread);
             thread.start();
         }
