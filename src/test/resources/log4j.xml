@@ -11,7 +11,7 @@
 	
 	<logger name="com.hmsonline">
 		<level value="DEBUG" />
-		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="WARN" />
 	</logger>
 
 	<root>
