@@ -33,7 +33,6 @@ public class CommitLog extends LogEntryStore {
     private static final long MAX_LOG_ENTRY_AGE = 5000; // age of entry, at
                                                         // which time any node
                                                         // can process it.
-
     public CommitLog() throws Exception {
         super(KEYSPACE, COLUMN_FAMILY_PREFIX);
         logger.warn("Instantiated commit log [" + this.getColumnFamily() + "]");
