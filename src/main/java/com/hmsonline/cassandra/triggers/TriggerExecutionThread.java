@@ -15,31 +15,22 @@ import com.hmsonline.cassandra.triggers.dao.TriggerStore;
 
 public class TriggerExecutionThread implements Runnable {
 	private static Logger logger = LoggerFactory.getLogger(CommitLog.class);
-
 	private BlockingQueue<LogEntry> workQueue = null;
 	private ProcessingManager processing;
-	private static volatile boolean RUNNING = true;
-	private Thread mainThread = null;
 
 	public TriggerExecutionThread(BlockingQueue<LogEntry> workQueue,
 			ProcessingManager processing) {
 		this.workQueue = workQueue;
 		this.processing = processing;
-		mainThread = Thread.currentThread();
 	}
 
 	public void run() {
-		while (RUNNING) {
+		while (true) {
 			try {
 				processLogEntry(workQueue.take());
 			} catch (Throwable t) {
 				logger.debug("Error processing logEntries", t);
 			}
-		}
-		try {
-			mainThread.join();
-		} catch (Exception e) {
-			logger.warn("Trouble rejoining main thread.", e);
 		}
 	}
 
