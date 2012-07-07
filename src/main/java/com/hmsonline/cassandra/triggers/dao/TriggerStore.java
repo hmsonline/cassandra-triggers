@@ -85,7 +85,13 @@ public class TriggerStore extends CassandraStore {
                     READ_CONSISTENCY);
             for (KeySlice slice : rows) {
                 String columnFamily = ByteBufferUtil.string(slice.key);
-                triggerMap.put(columnFamily, processRow(slice, triggerCache));
+                List<Trigger> triggersForColumnFamily = processRow(slice, triggerCache);
+                if(logger.isDebugEnabled()) {
+                    for (Trigger trigger : triggersForColumnFamily){
+                        logger.debug("Adding trigger [" + columnFamily + "] --> [" + trigger.getClass() + "]");                    	
+                    }
+                }                
+                triggerMap.put(columnFamily, triggersForColumnFamily);
             }
         }
         if(logger.isDebugEnabled()) {

@@ -8,7 +8,7 @@ public class TestTrigger implements Trigger {
     private static boolean wasCalled = false;
 
     public void process(LogEntry logEntry) {
-        logger.debug("Trigger processing : [" + logEntry.getUuid() + "]");   
+        logger.debug("TestTrigger processing : [" + logEntry.getUuid() + "]");   
         wasCalled = true;
     }
 

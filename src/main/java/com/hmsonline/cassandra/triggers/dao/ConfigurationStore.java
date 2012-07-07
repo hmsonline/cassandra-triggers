@@ -82,12 +82,14 @@ public class ConfigurationStore extends CassandraStore {
                     String key = ByteBufferUtil.string(column.column.name);
                     String value = ByteBufferUtil.string(column.column.value);
                     properties.put(key, value);
+
                 }
                 configuration.put(component, properties);
             }
 
             this.lastFetchTime = currentTime;
             cache = configuration;
+            logger.debug("Triggers.isCommitLogEnabled? [" + this.isCommitLogEnabled() + "]");
         }
         return cache;
     }
