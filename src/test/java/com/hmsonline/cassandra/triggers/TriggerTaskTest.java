@@ -25,8 +25,8 @@ public class TriggerTaskTest {
             t.setStackTrace(new StackTraceElement[] {});
             throw t;
         } catch (Exception e) {
-            Assert.assertEquals("Should throw a null pointer", "java.lang.Exception\n",
-                    TriggerExecutionThread.stackToString(e));
+            Assert.assertEquals("Should throw a null pointer", "java.lang.Exception",
+                    TriggerExecutionThread.stackToString(e).trim());
         }
     }
 }
